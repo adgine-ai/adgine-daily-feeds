@@ -1,12 +1,12 @@
 ---
 name: adgine-daily-feeds
 description: Use this skill to fetch, display, summarize, render HTML, or deliver Adgine/CIO Daily Chinese GEO/AEO daily report results from the hosted daily.wefnews.com API, with optional Telegram delivery using user-provided configuration.
-version: v0.4.0
+version: v0.5.0
 ---
 
 # Adgine Daily Feeds
 
-Version: `v0.4.0`
+Version: `v0.5.0`
 
 Use this skill when the task is to fetch, display, summarize, render HTML, or deliver an Adgine/CIO Daily style daily report for `GEO / AEO`.
 
@@ -23,7 +23,7 @@ Default API endpoint:
 - Latest report: `https://daily.wefnews.com/api/reports/daily/latest`
 - Date report: `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`
 
-Not in v0.4.0:
+Not in v0.5.0:
 
 - X/Twitter, Medium, Reddit, Xiaohongshu, Douyin, GitHub, or competitor feeds.
 - Local Sogou Weixin crawling or browser-based WeChat URL resolution.
@@ -42,6 +42,7 @@ Not in v0.4.0:
 2. Produce simple report outputs.
    - User version: concise, readable, only high-quality or scannable items.
    - For a temporary HTML page, run `scripts/render-daily-report-html.mjs`.
+   - HTML output defaults to light theme and includes a Light/Dark switch.
    - Operations detail should stay in API `meta` and `warnings` unless the user asks for it.
 
 3. Preserve source links from the API.
@@ -112,7 +113,8 @@ The skill includes a minimal runnable script set under `scripts/`.
 - `scripts/render-daily-report-html.mjs`
   - Fetches the hosted API or reads a saved API JSON, then renders a standalone HTML page.
   - Defaults to the same hosted latest-report API.
-  - Supports `--date=YYYY-MM-DD`, `--api-url=<url>`, `--input=<path>`, and `--output=<path>`.
+  - Supports `--date=YYYY-MM-DD`, `--api-url=<url>`, `--input=<path>`, `--output=<path>`, and `--theme=light|dark`.
+  - Default theme is `light`; the generated page also includes an in-page Light/Dark switch.
   - Uses `templates/daily-report.html`.
   - Use this when WorkBuddy or another agent needs a temporary readable HTML page without building a web app.
 
@@ -128,7 +130,7 @@ Default output when saving API results:
 
 ## Delivery Configuration
 
-`v0.4.0` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
+`v0.5.0` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
 
 - Example config: `config/destinations.example.json`
 - Local config: `config/destinations.local.json` or `config/destinations.json`

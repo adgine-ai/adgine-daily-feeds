@@ -95,6 +95,13 @@ function itemHref(item) {
   return item.href_url || item.url || item.fallback_url || "#";
 }
 
+function sourceLabel(item) {
+  if (typeof item.source === "string") {
+    return item.source;
+  }
+  return item.source?.label || item.source_label || "未知";
+}
+
 function splitPublishedLabel(label) {
   const [publishedAt, quality] = String(label || "n/a").split("｜");
   return {
@@ -111,7 +118,7 @@ function renderConclusion(report) {
   const bullets = Array.isArray(conclusion.bullets)
     ? `<ul>${conclusion.bullets.map((bullet) => `<li>${escapeHtml(bullet)}</li>`).join("")}</ul>`
     : "";
-  return `<section><h2>今日结论</h2><p class="lead">${escapeHtml(conclusion.title)}</p>${bullets}</section>`;
+  return `<section class="conclusion"><div class="tag">今日结论</div><div class="summary">${escapeHtml(conclusion.title)}</div>${bullets}</section>`;
 }
 
 function renderItems(report) {
@@ -122,40 +129,69 @@ function renderItems(report) {
       index += 1;
       const meta = splitPublishedLabel(item.published_label);
       const recommendation = item.ai_recommendation
-        ? `<p class="recommendation">推荐：${escapeHtml(item.ai_recommendation)}</p>`
+        ? `<div class="recommend">推荐：${escapeHtml(item.ai_recommendation)}</div>`
         : "";
-      return `<article>
-        <div class="index">${current}</div>
-        <div>
+      return `<article class="card">
+        <div class="title-row">
+          <div class="index">${current}</div>
           <a class="title" href="${escapeAttr(itemHref(item))}" target="_blank" rel="noreferrer">${escapeHtml(item.title)}</a>
-          <div class="chips">
-            <span class="chip">来源：${escapeHtml(item.source || item.source?.label || "未知")}</span>
-            <span class="chip">${escapeHtml(meta.publishedAt)}</span>
-            <span class="chip">指数：${escapeHtml(meta.quality)}</span>
-          </div>
-          ${recommendation}
         </div>
+        <div class="detail">
+          <span>来源：${escapeHtml(sourceLabel(item))}</span>
+          <span>${escapeHtml(meta.publishedAt)}</span>
+          <span class="quality">${escapeHtml(meta.quality)}</span>
+        </div>
+        ${recommendation}
       </article>`;
     }).join("");
-    return `<section><h2>${escapeHtml(section.title)}</h2><div class="items">${items}</div></section>`;
+    return `<div class="section-title">${escapeHtml(section.title)}</div>${items}`;
   }).join("");
 }
 
+function allReportItems(report) {
+  return getDisplaySections(report).flatMap((section) => section.items || []);
+}
+
+function countMustRead(report) {
+  return allReportItems(report).filter((item) => {
+    const label = item.published_label || "";
+    const grade = item.quality?.grade || "";
+    return String(label).includes("must_read") || grade === "must_read";
+  }).length;
+}
+
+function shortDate(value) {
+  const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : String(value || "latest");
+}
+
+function formatWindow(report) {
+  if (!report.window?.start_at || !report.window?.end_at) {
+    return "窗口：latest";
+  }
+  return `窗口：${report.window.start_at} -> ${report.window.end_at}`;
+}
+
+function normalizeTheme(theme) {
+  return theme === "dark" ? "dark" : "light";
+}
+
 function renderHtml(template, report) {
-  const windowLabel = report.window?.start_at && report.window?.end_at
-    ? ` ｜ 窗口：${report.window.start_at} - ${report.window.end_at}`
-    : "";
   const content = `${renderConclusion(report)}${renderItems(report)}`;
+  const footer = `${(report.footer || "@Adgine.ai beta").replace(/^- /, "")} · CIO Daily 日报 · API v0.5.0`;
   return template
     .replaceAll("{{title}}", escapeHtml(report.title || "CIO Daily 日报"))
+    .replaceAll("{{theme}}", escapeHtml(normalizeTheme(readArg("theme"))))
+    .replaceAll("{{date}}", escapeHtml(shortDate(report.display_captured_at || report.captured_at)))
     .replaceAll("{{displayScope}}", escapeHtml(report.display_scope || "来源：微信公众号"))
-    .replaceAll("{{capturedAt}}", escapeHtml(report.display_captured_at || report.captured_at || ""))
-    .replaceAll("{{windowLabel}}", escapeHtml(windowLabel))
+    .replaceAll("{{windowText}}", escapeHtml(formatWindow(report)))
+    .replaceAll("{{badge}}", escapeHtml("API v0.5.0 · daily.wefnews.com"))
     .replaceAll("{{sampledCount}}", escapeHtml(report.totals?.sampled_count ?? "-"))
     .replaceAll("{{windowCount}}", escapeHtml(report.totals?.window_count ?? "-"))
     .replaceAll("{{selectedCount}}", escapeHtml(report.totals?.selected_count ?? "-"))
+    .replaceAll("{{mustReadCount}}", escapeHtml(countMustRead(report)))
     .replaceAll("{{content}}", content)
-    .replaceAll("{{footer}}", escapeHtml(report.footer || "- @Adgine.ai beta"));
+    .replaceAll("{{footer}}", escapeHtml(footer));
 }
 
 async function main() {

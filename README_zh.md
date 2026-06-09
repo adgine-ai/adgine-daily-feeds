@@ -1,6 +1,6 @@
 # Adgine Daily Feeds
 
-版本：`v0.4.0`
+版本：`v0.5.0`
 
 `adgine-daily-feeds` 是一个用于消费和分发中文 GEO/AEO 日报结果的 Codex Skill。当前是 API-only：服务端生成日报 JSON，Skill 只负责获取、展示或分发结果。
 
@@ -9,7 +9,7 @@
 - 默认线上 API：`https://daily.wefnews.com/api/reports/daily/latest`。
 - 指定日期 API：`https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`。
 - 用户可读日报展示。
-- 独立临时 HTML 日报渲染。
+- 独立临时 HTML 日报渲染，支持 Light/Dark 切换。
 - 使用用户本地配置推送到 Telegram。
 - 本地版本检测。
 
@@ -74,6 +74,14 @@ node skills/adgine-daily-feeds/scripts/render-daily-report-html.mjs \
   --output=skills/adgine-daily-feeds/data/html/latest-report.html
 ```
 
+默认是 light。生成的 HTML 页面内也有 Light/Dark 切换。如果希望首次打开就是 dark：
+
+```bash
+node skills/adgine-daily-feeds/scripts/render-daily-report-html.mjs \
+  --theme=dark \
+  --output=skills/adgine-daily-feeds/data/html/latest-report.html
+```
+
 渲染指定日期：
 
 ```bash
@@ -99,7 +107,7 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs
 和手动指定的最新版本比较：
 
 ```bash
-node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.4.0
+node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.5.0
 ```
 
 ## 推送配置

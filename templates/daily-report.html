@@ -5,174 +5,316 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}}</title>
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
       color-scheme: light;
-      --bg: #f7f8fa;
-      --surface: #ffffff;
-      --text: #16202a;
-      --muted: #5d6b7a;
-      --subtle: #8492a3;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --panel-strong: #ffffff;
+      --text: #17202a;
+      --muted: #5f6b7a;
+      --subtle: #8a95a3;
       --line: #dce3ea;
       --brand: #0b7bd3;
-      --soft: #f1f4f7;
+      --brand-2: #3457d5;
+      --accent: #6d5dfc;
+      --header-1: #edf5ff;
+      --header-2: #f7faff;
+      --highlight: #fff9e8;
+      --highlight-line: #f2d585;
+      --chip: #f0f3f7;
+      --shadow: 0 14px 36px rgba(31, 42, 68, 0.08);
     }
-    * { box-sizing: border-box; }
+    body[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0f0f12;
+      --panel: #1a1a24;
+      --panel-strong: #151520;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --subtle: #6b7280;
+      --line: #2a2a3a;
+      --brand: #a5b4fc;
+      --brand-2: #818cf8;
+      --accent: #7c3aed;
+      --header-1: #1a1a2e;
+      --header-2: #0f3460;
+      --highlight: #1e1b2e;
+      --highlight-line: #312e5c;
+      --chip: rgba(99, 102, 241, 0.15);
+      --shadow: none;
+    }
     body {
-      margin: 0;
+      min-height: 100vh;
       background: var(--bg);
       color: var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.7;
     }
-    .page {
-      width: min(960px, calc(100% - 32px));
+    .container {
+      width: min(760px, calc(100% - 32px));
       margin: 0 auto;
-      padding: 36px 0 56px;
+      padding: 20px 0 60px;
     }
-    header {
-      border-bottom: 1px solid var(--line);
-      padding-bottom: 24px;
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
     }
-    .brand {
-      margin: 0 0 10px;
-      color: var(--brand);
-      font-size: 14px;
-      font-weight: 700;
+    .theme-toggle {
+      display: inline-flex;
+      gap: 4px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      padding: 4px;
+      box-shadow: var(--shadow);
+    }
+    .theme-toggle button {
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      line-height: 1;
+      padding: 7px 10px;
+    }
+    body[data-theme="light"] .theme-toggle [data-set-theme="light"],
+    body[data-theme="dark"] .theme-toggle [data-set-theme="dark"] {
+      background: var(--brand-2);
+      color: #fff;
+    }
+    .header {
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 20px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--header-1), var(--header-2));
+      box-shadow: var(--shadow);
+      padding: 34px 28px 26px;
+    }
+    .header::before {
+      position: absolute;
+      top: -52px;
+      right: -48px;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(109, 93, 252, 0.23), transparent 68%);
+      content: "";
     }
     h1 {
-      margin: 0;
-      font-size: 36px;
+      position: relative;
+      font-size: 30px;
+      font-weight: 760;
       line-height: 1.18;
       letter-spacing: 0;
     }
     .meta {
-      margin-top: 12px;
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.7;
-    }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 18px;
-    }
-    .stat {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--surface);
-      padding: 12px;
-    }
-    .stat strong {
-      display: block;
-      font-size: 22px;
-    }
-    .stat span {
-      display: block;
-      margin-top: 2px;
-      color: var(--subtle);
-      font-size: 12px;
-    }
-    section {
-      border-bottom: 1px solid var(--line);
-      padding: 28px 0;
-    }
-    h2 {
-      margin: 0 0 16px;
-      font-size: 24px;
-      line-height: 1.3;
-    }
-    .lead {
-      margin: 0 0 14px;
-      font-size: 18px;
-      line-height: 1.75;
-      font-weight: 650;
-    }
-    ul {
-      margin: 0;
-      padding-left: 20px;
-      color: var(--muted);
-      line-height: 1.72;
-    }
-    .items {
-      display: grid;
-      gap: 12px;
-    }
-    article {
-      display: grid;
-      grid-template-columns: 36px minmax(0, 1fr);
-      gap: 14px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--surface);
-      padding: 16px;
-    }
-    .index {
-      display: grid;
-      width: 36px;
-      height: 36px;
-      place-items: center;
-      border-radius: 8px;
-      background: var(--soft);
-      color: var(--muted);
-      font-weight: 700;
-    }
-    a.title {
-      color: var(--brand);
-      font-size: 18px;
-      line-height: 1.48;
-      font-weight: 720;
-      text-decoration: none;
-    }
-    a.title:hover {
-      text-decoration: underline;
-      text-underline-offset: 4px;
-    }
-    .chips {
+      position: relative;
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 12px 16px;
       margin-top: 10px;
       color: var(--muted);
       font-size: 13px;
     }
-    .chip {
-      border-radius: 999px;
-      background: var(--soft);
-      padding: 5px 9px;
+    .badge {
+      position: relative;
+      display: inline-block;
+      margin-top: 12px;
+      border-radius: 20px;
+      background: var(--chip);
+      color: var(--brand-2);
+      padding: 4px 10px;
+      font-size: 11px;
+      letter-spacing: 0;
     }
-    .recommendation {
-      margin: 12px 0 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.68;
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 22px;
     }
-    footer {
-      padding-top: 24px;
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 13px 10px;
+      text-align: center;
+    }
+    .stat .num {
+      color: var(--brand-2);
+      font-size: 23px;
+      font-weight: 760;
+    }
+    .stat .label {
+      margin-top: 2px;
       color: var(--subtle);
+      font-size: 11px;
+    }
+    .conclusion {
+      margin-bottom: 24px;
+      border: 1px solid var(--highlight-line);
+      border-radius: 12px;
+      background: var(--highlight);
+      padding: 20px 22px;
+    }
+    .conclusion .tag {
+      margin-bottom: 10px;
+      color: var(--brand-2);
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+    .conclusion .summary {
+      margin-bottom: 12px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 650;
+    }
+    .conclusion ul { list-style: none; }
+    .conclusion li {
+      position: relative;
+      padding: 4px 0 4px 16px;
+      color: var(--muted);
       font-size: 13px;
     }
-    @media (max-width: 680px) {
-      .page { width: min(100% - 24px, 960px); }
-      h1 { font-size: 30px; }
-      .stats { grid-template-columns: repeat(3, 1fr); }
-      article { grid-template-columns: 1fr; }
+    .conclusion li::before {
+      position: absolute;
+      left: 0;
+      color: var(--brand-2);
+      content: "•";
+    }
+    .section-title {
+      margin: 28px 0 14px;
+      border-left: 3px solid var(--brand-2);
+      padding-left: 12px;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 760;
+    }
+    .card {
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 17px 19px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      border-color: var(--brand-2);
+      transform: translateY(-1px);
+    }
+    .title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .index {
+      display: flex;
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--brand-2), var(--accent));
+      color: #fff;
+      font-size: 13px;
+      font-weight: 760;
+    }
+    .title {
+      min-width: 0;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 680;
+      line-height: 1.6;
+      text-decoration: none;
+    }
+    .title:hover {
+      color: var(--brand);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+    .detail {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 9px;
+      color: var(--subtle);
+      font-size: 12px;
+    }
+    .quality {
+      border-radius: 6px;
+      background: var(--chip);
+      color: var(--brand-2);
+      padding: 2px 8px;
+      font-size: 11px;
+    }
+    .recommend {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-style: italic;
+    }
+    .footer {
+      margin-top: 34px;
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+      color: var(--subtle);
+      text-align: center;
+      font-size: 12px;
+    }
+    @media (max-width: 640px) {
+      .container { width: min(100% - 24px, 760px); }
+      .header { padding: 28px 22px 24px; }
+      h1 { font-size: 25px; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
 </head>
-<body>
-  <main class="page">
-    <header>
-      <p class="brand">{{displayScope}}</p>
-      <h1>{{title}}</h1>
-      <div class="meta">{{capturedAt}}{{windowLabel}}</div>
-      <div class="stats">
-        <div class="stat"><strong>{{sampledCount}}</strong><span>采集样本</span></div>
-        <div class="stat"><strong>{{windowCount}}</strong><span>窗口条目</span></div>
-        <div class="stat"><strong>{{selectedCount}}</strong><span>入选日报</span></div>
+<body data-theme="{{theme}}">
+  <main class="container">
+    <div class="toolbar">
+      <div class="theme-toggle" aria-label="Theme">
+        <button type="button" data-set-theme="light">Light</button>
+        <button type="button" data-set-theme="dark">Dark</button>
       </div>
+    </div>
+    <header class="header">
+      <h1>{{title}}</h1>
+      <div class="meta">
+        <span>{{date}}</span>
+        <span>{{displayScope}}</span>
+        <span>{{windowText}}</span>
+      </div>
+      <div class="badge">{{badge}}</div>
     </header>
+    <section class="stats">
+      <div class="stat"><div class="num">{{sampledCount}}</div><div class="label">采样</div></div>
+      <div class="stat"><div class="num">{{windowCount}}</div><div class="label">窗口内</div></div>
+      <div class="stat"><div class="num">{{selectedCount}}</div><div class="label">精选</div></div>
+      <div class="stat"><div class="num">{{mustReadCount}}</div><div class="label">Must Read</div></div>
+    </section>
     {{content}}
-    <footer>{{footer}}</footer>
+    <footer class="footer">{{footer}}</footer>
   </main>
+  <script>
+    (function () {
+      var buttons = document.querySelectorAll("[data-set-theme]");
+      buttons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          var theme = button.getAttribute("data-set-theme") || "light";
+          document.body.setAttribute("data-theme", theme);
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
