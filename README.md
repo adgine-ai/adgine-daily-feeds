@@ -1,6 +1,6 @@
 # Adgine Daily Feeds
 
-Version: `v0.3.0`
+Version: `v0.4.0`
 
 `adgine-daily-feeds` is a Codex skill for consuming and delivering Chinese GEO/AEO daily report results. It is API-only: the server generates the daily report JSON, and the skill fetches or delivers that result.
 
@@ -9,6 +9,7 @@ Version: `v0.3.0`
 - Default hosted API: `https://daily.wefnews.com/api/reports/daily/latest`.
 - Date-specific API: `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`.
 - User-readable daily report display.
+- Standalone temporary HTML report rendering.
 - Optional Telegram delivery with user-provided local config.
 - Local version checking.
 
@@ -35,7 +36,10 @@ adgine-daily-feeds/
 └── scripts/
     ├── check-version.mjs
     ├── fetch-daily-report-api.mjs
+    ├── render-daily-report-html.mjs
     └── telegram-send.mjs
+├── templates/
+│   └── daily-report.html
 ```
 
 ## API Usage
@@ -61,6 +65,31 @@ node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
 
 Use the returned `report.sections` directly for display, Telegram delivery, or web feed rendering. See `references/api-report-schema.md`.
 
+## HTML Template
+
+Render the latest hosted report to a standalone HTML file:
+
+```bash
+node skills/adgine-daily-feeds/scripts/render-daily-report-html.mjs \
+  --output=skills/adgine-daily-feeds/data/html/latest-report.html
+```
+
+Render a specific date:
+
+```bash
+node skills/adgine-daily-feeds/scripts/render-daily-report-html.mjs \
+  --date=2026-06-09 \
+  --output=skills/adgine-daily-feeds/data/html/2026-06-09.html
+```
+
+Render from a saved API result:
+
+```bash
+node skills/adgine-daily-feeds/scripts/render-daily-report-html.mjs \
+  --input=skills/adgine-daily-feeds/data/feed/latest-report.json \
+  --output=skills/adgine-daily-feeds/data/html/latest-report.html
+```
+
 ## Version Check
 
 ```bash
@@ -70,7 +99,7 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs
 Compare against a manually supplied latest version:
 
 ```bash
-node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.3.0
+node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.4.0
 ```
 
 ## Delivery Configuration
