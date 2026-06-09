@@ -1,10 +1,10 @@
 # WeChat/Sogou Source Notes
 
-Version: `v0.2.0`
+Version: `v0.2.1`
 
 ## Source Contract
 
-Primary source in v0.2.0:
+Primary source in v0.2.1:
 
 - Sogou Weixin article search: `https://weixin.sogou.com/weixin?type=2&query=<keyword>`
 - Source label in reports: `公众号·<account name>`

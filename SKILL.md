@@ -1,12 +1,12 @@
 ---
 name: adgine-daily-feeds
 description: Use this skill to run the Adgine Daily Feeds workflow for Chinese GEO/AEO daily monitoring, starting with WeChat Official Account results from Sogou Weixin: capture keyword feeds, score article quality, filter low-value noise, produce a user-readable daily report, and preserve source links for Feishu or web feed display.
-version: v0.2.0
+version: v0.2.1
 ---
 
 # Adgine Daily Feeds
 
-Version: `v0.2.0`
+Version: `v0.2.1`
 
 Use this skill when the task is to fetch, display, deliver, or fall back to generating an Adgine/CIO Daily style daily report for `GEO / AEO`.
 
@@ -18,7 +18,12 @@ Current supported source:
 
 - WeChat Official Accounts via Sogou Weixin search.
 
-Not in v0.2.0:
+Default API endpoint:
+
+- Latest report: `https://daily.wefnews.com/api/reports/daily/latest`
+- Date report: `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`
+
+Not in v0.2.1:
 
 - X/Twitter, Medium, Reddit, Xiaohongshu, Douyin, GitHub, or competitor feeds.
 - Direct WeChat private API access.
@@ -29,7 +34,8 @@ Not in v0.2.0:
 
 1. Prefer the Daily Report API.
    - Read `references/api-report-schema.md` for the response shape.
-   - Fetch a generated report result when an API base URL is configured or supplied by the user.
+   - Default to `https://daily.wefnews.com/api/reports/daily/latest` unless the user supplies a different API URL.
+   - For a specific date, use `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`.
    - Use the API result directly for display or delivery.
 
 2. Establish the reporting window only when local fallback is needed.
@@ -117,6 +123,12 @@ The skill includes a minimal runnable script set under `scripts/`.
   - Supports `--latest=vX.Y.Z` or `ADGINE_DAILY_FEEDS_LATEST_VERSION=vX.Y.Z` for manual comparison.
   - If the local version is older than the supplied latest version, tell the user to manually update the skill before production use.
 
+- `scripts/fetch-daily-report-api.mjs`
+  - Fetches the server-generated daily report JSON from `daily.wefnews.com`.
+  - Defaults to `https://daily.wefnews.com/api/reports/daily/latest`.
+  - Supports `--date=YYYY-MM-DD`, `--api-url=<url>`, and `--output=<path>`.
+  - Use this before local crawling whenever the user wants the latest report data.
+
 - `scripts/capture-weixin-sogou.mjs`
   - Captures Sogou Weixin keyword results.
   - Writes raw/feed/report artifacts under the skill folder when run from this skill.
@@ -144,7 +156,7 @@ Default outputs when using bundled scripts:
 
 ## Delivery Configuration
 
-`v0.2.0` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
+`v0.2.1` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
 
 - Example config: `config/destinations.example.json`
 - Local config: `config/destinations.local.json` or `config/destinations.json`

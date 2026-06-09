@@ -1,14 +1,15 @@
 # Adgine Daily Feeds
 
-Version: `v0.2.0`
+Version: `v0.2.1`
 
 `adgine-daily-feeds` is a Codex skill for consuming and delivering Chinese GEO/AEO daily report results. The preferred mode is API-first: the server generates the daily report JSON, and the skill keeps agent-side behavior simple.
 
 ## Current Scope
 
-Supported in `v0.2.0`:
+Supported in `v0.2.1`:
 
 - API-first daily report result consumption.
+- Default hosted API: `https://daily.wefnews.com/api/reports/daily/latest`.
 - WeChat Official Account search via Sogou Weixin.
 - GEO/AEO keyword monitoring.
 - Article quality scoring.
@@ -45,6 +46,7 @@ adgine-daily-feeds/
     ├── apply-weixin-original-urls.mjs
     ├── capture-weixin-sogou.mjs
     ├── check-version.mjs
+    ├── fetch-daily-report-api.mjs
     ├── generate-daily-report.mjs
     └── telegram-send.mjs
 ```
@@ -54,10 +56,18 @@ adgine-daily-feeds/
 Preferred API flow:
 
 ```text
-GET /v1/reports/daily?date=YYYY-MM-DD&source=weixin_sogou
+GET https://daily.wefnews.com/api/reports/daily/latest
+GET https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD
 ```
 
 Use the returned `report.sections` directly for display, Telegram delivery, or web feed rendering. See `references/api-report-schema.md`.
+
+Fetch and save the latest hosted report:
+
+```bash
+node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
+  --output=skills/adgine-daily-feeds/data/feed/latest-report.json
+```
 
 Local fallback flow:
 
@@ -98,7 +108,7 @@ If the script reports `is_outdated: true`, update the skill manually before prod
 
 ## Delivery Configuration
 
-The skill supports optional Telegram delivery in `v0.2.0` and includes a future-ready destination config example:
+The skill supports optional Telegram delivery in `v0.2.1` and includes a future-ready destination config example:
 
 ```text
 skills/adgine-daily-feeds/config/destinations.example.json

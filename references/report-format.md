@@ -1,6 +1,6 @@
 # Report Format
 
-Version: `v0.2.0`
+Version: `v0.2.1`
 
 ## User Version
 

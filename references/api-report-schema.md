@@ -1,6 +1,6 @@
 # Daily Report API Schema
 
-Version: `v0.2.0`
+Version: `v0.2.1`
 
 The API layer should return generated daily report results only. Crawling, browser-based WeChat URL resolution, scoring, deduplication, and scheduling should happen on the server side before this API is consumed.
 
@@ -14,6 +14,27 @@ Keep the skill simple:
 - Use bundled local scripts only as fallback when the API is unavailable.
 
 ## Endpoint
+
+Default hosted endpoint:
+
+```http
+GET https://daily.wefnews.com/api/reports/daily/latest
+GET https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD
+```
+
+The current hosted response is:
+
+```json
+{
+  "ok": true,
+  "date": "2026-06-09",
+  "report": {}
+}
+```
+
+Use `report.sections` directly. If `ok` is not `true`, treat the report as unavailable and do not fabricate content.
+
+Future normalized endpoint:
 
 ```http
 GET /v1/reports/daily?date=YYYY-MM-DD&source=weixin_sogou
@@ -142,10 +163,12 @@ Item `url_status`:
 
 When API is available:
 
-1. Request `/v1/reports/daily`.
-2. If `status` is `ready` or `partial`, use `report.sections` for display/delivery.
-3. Show warnings only when the user asks for operational detail or the report is partial.
-4. Do not rerun local crawling.
+1. Request `https://daily.wefnews.com/api/reports/daily/latest` by default.
+2. For a specific date, request `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`.
+3. If the hosted response has `ok: true`, use `report.sections` for display/delivery.
+4. If the future normalized response has `status` as `ready` or `partial`, use `report.sections`.
+5. Show warnings only when the user asks for operational detail or the report is partial.
+6. Do not rerun local crawling.
 
 When API is unavailable:
 

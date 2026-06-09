@@ -1,14 +1,15 @@
 # Adgine Daily Feeds
 
-版本：`v0.2.0`
+版本：`v0.2.1`
 
 `adgine-daily-feeds` 是一个用于消费和分发中文 GEO/AEO 日报结果的 Codex Skill。推荐模式是 API-first：服务器生成日报 JSON，Skill 侧保持尽可能简单。
 
 ## 当前范围
 
-`v0.2.0` 已支持：
+`v0.2.1` 已支持：
 
 - 优先消费 API 返回的日报结果。
+- 默认线上 API：`https://daily.wefnews.com/api/reports/daily/latest`。
 - 通过搜狗微信搜索微信公众号文章。
 - GEO/AEO 关键词监测。
 - 文章质量评分。
@@ -45,6 +46,7 @@ adgine-daily-feeds/
     ├── apply-weixin-original-urls.mjs
     ├── capture-weixin-sogou.mjs
     ├── check-version.mjs
+    ├── fetch-daily-report-api.mjs
     ├── generate-daily-report.mjs
     └── telegram-send.mjs
 ```
@@ -54,10 +56,18 @@ adgine-daily-feeds/
 推荐 API 流程：
 
 ```text
-GET /v1/reports/daily?date=YYYY-MM-DD&source=weixin_sogou
+GET https://daily.wefnews.com/api/reports/daily/latest
+GET https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD
 ```
 
 直接使用返回的 `report.sections` 做展示、Telegram 推送或 Web feed 渲染。具体结构见 `references/api-report-schema.md`。
+
+拉取并保存最新线上日报：
+
+```bash
+node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
+  --output=skills/adgine-daily-feeds/data/feed/latest-report.json
+```
 
 本地 fallback 流程：
 
@@ -98,7 +108,7 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.0.2
 
 ## 推送配置
 
-`v0.2.0` 支持可选 Telegram 推送，并预留了通用推送配置示例：
+`v0.2.1` 支持可选 Telegram 推送，并预留了通用推送配置示例：
 
 ```text
 skills/adgine-daily-feeds/config/destinations.example.json
@@ -200,7 +210,7 @@ CIO Daily 日报 | YYYY-MM-DD
 
 ## 版本管理
 
-当前版本：`v0.2.0`
+当前版本：`v0.2.1`
 
 版本规则：
 

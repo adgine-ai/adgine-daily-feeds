@@ -1,6 +1,6 @@
 interface:
   display_name: "Adgine Daily Feeds"
   short_description: "Run Chinese GEO/AEO daily feed reporting"
-  default_prompt: "Use $adgine-daily-feeds to generate today's WeChat GEO/AEO daily feed report."
+  default_prompt: "Use $adgine-daily-feeds to fetch today's WeChat GEO/AEO daily report from the hosted API."
 policy:
   allow_implicit_invocation: true
