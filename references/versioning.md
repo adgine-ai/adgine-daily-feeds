@@ -1,11 +1,11 @@
 # Versioning
 
-Current version: `v0.2.1`
+Current version: `v0.3.0`
 
 Use semantic versioning:
 
 - Patch `v0.0.x`: wording, filters, scoring threshold tweaks, bug fixes that do not change output schema.
-- Minor `v0.x.0`: new source type, new output mode, new normalized fields, or new automation workflow.
+- Minor `v0.x.0`: new source type, output mode, normalized fields, automation workflow, or removal of old fallback behavior.
 - Major `vX.0.0`: breaking report schema or incompatible skill workflow changes.
 
 When bumping version:

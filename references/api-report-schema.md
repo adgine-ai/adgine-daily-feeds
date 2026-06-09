@@ -1,8 +1,8 @@
 # Daily Report API Schema
 
-Version: `v0.2.1`
+Version: `v0.3.0`
 
-The API layer should return generated daily report results only. Crawling, browser-based WeChat URL resolution, scoring, deduplication, and scheduling should happen on the server side before this API is consumed.
+The API layer returns generated daily report results only. Crawling, browser-based WeChat URL resolution, scoring, deduplication, and scheduling happen on the server side before this API is consumed.
 
 ## Principle
 
@@ -11,7 +11,7 @@ Keep the skill simple:
 - Fetch a generated daily report JSON from the API.
 - Display it, summarize it, or deliver it to a configured channel.
 - Do not make every agent crawl Sogou Weixin or resolve WeChat links.
-- Use bundled local scripts only as fallback when the API is unavailable.
+- If the API is unavailable, report the missing state. This skill no longer includes local crawling fallback.
 
 ## Endpoint
 
@@ -173,5 +173,5 @@ When API is available:
 When API is unavailable:
 
 1. Say the API is unavailable.
-2. Offer local fallback scripts if the runtime supports Node and network access.
-3. If no fallback is possible, report the missing state instead of fabricating content.
+2. Do not run local crawling.
+3. Report the missing state instead of fabricating content.
