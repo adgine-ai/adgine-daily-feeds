@@ -1,0 +1,20 @@
+{
+  "version": "v0.1.0",
+  "default_destination": null,
+  "destinations": {
+    "feishu": {
+      "enabled": false,
+      "provider": "feishu",
+      "app_id": "cli_xxx",
+      "app_secret": "replace-me",
+      "receive_id_type": "chat_id",
+      "receive_id": "replace-me"
+    },
+    "telegram": {
+      "enabled": false,
+      "provider": "telegram",
+      "bot_token": "replace-me",
+      "chat_id": "replace-me"
+    }
+  }
+}

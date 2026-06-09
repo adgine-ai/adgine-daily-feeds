@@ -1,0 +1,5 @@
+data/
+reports/
+config/*.local.json
+config/destinations.json
+.DS_Store
