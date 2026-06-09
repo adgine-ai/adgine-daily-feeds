@@ -1,13 +1,14 @@
 # Adgine Daily Feeds
 
-版本：`v0.1.0`
+版本：`v0.2.0`
 
-`adgine-daily-feeds` 是一个用于生成中文 GEO/AEO 日常信息流的 Codex Skill。当前版本以微信公众号信息流为主，通过搜狗微信搜索采集相关文章，并生成可阅读的日报。
+`adgine-daily-feeds` 是一个用于消费和分发中文 GEO/AEO 日报结果的 Codex Skill。推荐模式是 API-first：服务器生成日报 JSON，Skill 侧保持尽可能简单。
 
 ## 当前范围
 
-`v0.1.0` 已支持：
+`v0.2.0` 已支持：
 
+- 优先消费 API 返回的日报结果。
 - 通过搜狗微信搜索微信公众号文章。
 - GEO/AEO 关键词监测。
 - 文章质量评分。
@@ -36,6 +37,7 @@ adgine-daily-feeds/
 ├── config/
 │   └── destinations.example.json
 ├── references/
+│   ├── api-report-schema.md
 │   ├── report-format.md
 │   ├── versioning.md
 │   └── weixin-sogou.md
@@ -48,6 +50,16 @@ adgine-daily-feeds/
 ```
 
 ## 使用方式
+
+推荐 API 流程：
+
+```text
+GET /v1/reports/daily?date=YYYY-MM-DD&source=weixin_sogou
+```
+
+直接使用返回的 `report.sections` 做展示、Telegram 推送或 Web feed 渲染。具体结构见 `references/api-report-schema.md`。
+
+本地 fallback 流程：
 
 重新抓取并生成指定日期日报：
 
@@ -86,7 +98,7 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.0.2
 
 ## 推送配置
 
-`v0.1.0` 支持可选 Telegram 推送，并预留了通用推送配置示例：
+`v0.2.0` 支持可选 Telegram 推送，并预留了通用推送配置示例：
 
 ```text
 skills/adgine-daily-feeds/config/destinations.example.json
@@ -121,6 +133,8 @@ node skills/adgine-daily-feeds/scripts/telegram-send.mjs \
 ```
 
 ## 输出目录
+
+API 输出应该是主要数据源。本地脚本输出尽量保持同样的 report 结构。
 
 默认输出位置：
 
@@ -176,6 +190,8 @@ CIO Daily 日报 | YYYY-MM-DD
 
 ## 注意事项
 
+- 保持 Skill 简单：获取或接收日报 JSON，然后展示或推送。
+- 抓取、微信链接解析、评分、去重和定时任务应优先放在 API/服务器侧。
 - 搜狗微信可能限流、拦截或返回不完整结果。
 - 搜狗微信搜索结果页通常不提供阅读量、点赞、评论、收藏等数据。
 - 部分搜狗跳转链接会过期，可能需要通过浏览器解析到 `mp.weixin.qq.com` 原文链接。
@@ -184,7 +200,7 @@ CIO Daily 日报 | YYYY-MM-DD
 
 ## 版本管理
 
-当前版本：`v0.1.0`
+当前版本：`v0.2.0`
 
 版本规则：
 

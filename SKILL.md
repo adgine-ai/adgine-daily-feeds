@@ -1,14 +1,16 @@
 ---
 name: adgine-daily-feeds
 description: Use this skill to run the Adgine Daily Feeds workflow for Chinese GEO/AEO daily monitoring, starting with WeChat Official Account results from Sogou Weixin: capture keyword feeds, score article quality, filter low-value noise, produce a user-readable daily report, and preserve source links for Feishu or web feed display.
-version: v0.1.0
+version: v0.2.0
 ---
 
 # Adgine Daily Feeds
 
-Version: `v0.1.0`
+Version: `v0.2.0`
 
-Use this skill when the task is to collect, judge, or produce an Adgine/CIO Daily style daily feed for `GEO / AEO`, especially from WeChat Official Accounts through Sogou Weixin.
+Use this skill when the task is to fetch, display, deliver, or fall back to generating an Adgine/CIO Daily style daily report for `GEO / AEO`.
+
+Preferred mode is API-first: consume a server-generated daily report result. Local crawling scripts are fallback only.
 
 ## Scope
 
@@ -16,7 +18,7 @@ Current supported source:
 
 - WeChat Official Accounts via Sogou Weixin search.
 
-Not in v0.1.0:
+Not in v0.2.0:
 
 - X/Twitter, Medium, Reddit, Xiaohongshu, Douyin, GitHub, or competitor feeds.
 - Direct WeChat private API access.
@@ -25,26 +27,31 @@ Not in v0.1.0:
 
 ## Core Workflow
 
-1. Establish the reporting window.
+1. Prefer the Daily Report API.
+   - Read `references/api-report-schema.md` for the response shape.
+   - Fetch a generated report result when an API base URL is configured or supplied by the user.
+   - Use the API result directly for display or delivery.
+
+2. Establish the reporting window only when local fallback is needed.
    - Default daily slot: `10:00 Asia/Shanghai`.
    - Default window: yesterday `10:00` to today `10:00`.
    - If running before the slot, mark it as a manual/pre-open snapshot.
 
-2. Capture WeChat/Sogou keyword results.
+3. Capture WeChat/Sogou keyword results only as local fallback.
    - Default keywords: `GEO`, `AEO`, `生成式引擎优化`, `答案引擎优化`, `AI 搜索`.
    - Store raw result JSON before filtering.
    - Preserve both Sogou redirect URL and final WeChat article URL when resolved.
 
-3. Score and filter articles.
+4. Score and filter articles.
    - Keep `must_read` and `useful` for the user-facing report.
    - Keep `archive/watch` for operations or future knowledge-base review.
    - Exclude off-topic results such as geography/GIS `GEO`, customs `AEO`, generic service ads, thin soft articles, and keyword-stuffed content.
 
-4. Produce two outputs.
+5. Produce simple report outputs.
    - User version: concise, readable, only high-quality or scannable items.
-   - Operations version: source volume, noise patterns, scoring reasons, tuning suggestions, missing data, blocked sources.
+   - Operations detail should stay in API `meta` and `warnings` unless the user asks for it.
 
-5. Preserve source links.
+6. Preserve source links.
    - In Feishu or web feed, put the link on the item title.
    - Avoid showing long raw URLs in the visible report body.
    - If a Sogou `/link` cannot be resolved to `mp.weixin.qq.com`, mark it unresolved instead of pretending it is final.
@@ -137,7 +144,7 @@ Default outputs when using bundled scripts:
 
 ## Delivery Configuration
 
-`v0.1.0` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
+`v0.2.0` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
 
 - Example config: `config/destinations.example.json`
 - Local config: `config/destinations.local.json` or `config/destinations.json`
@@ -162,6 +169,7 @@ When working inside `cio-daily`, prefer existing project scripts before inventin
 
 Reference files:
 
+- Read `references/api-report-schema.md` before designing or consuming the API layer.
 - Read `references/weixin-sogou.md` for source handling and known limitations.
 - Read `references/report-format.md` before changing user-facing report structure.
 - Read `references/versioning.md` before bumping the skill version.

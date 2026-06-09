@@ -1,13 +1,14 @@
 # Adgine Daily Feeds
 
-Version: `v0.1.0`
+Version: `v0.2.0`
 
-`adgine-daily-feeds` is a Codex skill for generating Chinese GEO/AEO daily feeds. The current version focuses on WeChat Official Account articles discovered through Sogou Weixin.
+`adgine-daily-feeds` is a Codex skill for consuming and delivering Chinese GEO/AEO daily report results. The preferred mode is API-first: the server generates the daily report JSON, and the skill keeps agent-side behavior simple.
 
 ## Current Scope
 
-Supported in `v0.1.0`:
+Supported in `v0.2.0`:
 
+- API-first daily report result consumption.
 - WeChat Official Account search via Sogou Weixin.
 - GEO/AEO keyword monitoring.
 - Article quality scoring.
@@ -36,6 +37,7 @@ adgine-daily-feeds/
 ├── config/
 │   └── destinations.example.json
 ├── references/
+│   ├── api-report-schema.md
 │   ├── report-format.md
 │   ├── versioning.md
 │   └── weixin-sogou.md
@@ -48,6 +50,16 @@ adgine-daily-feeds/
 ```
 
 ## Usage
+
+Preferred API flow:
+
+```text
+GET /v1/reports/daily?date=YYYY-MM-DD&source=weixin_sogou
+```
+
+Use the returned `report.sections` directly for display, Telegram delivery, or web feed rendering. See `references/api-report-schema.md`.
+
+Local fallback flow:
 
 Run a fresh capture and generate a daily report:
 
@@ -86,7 +98,7 @@ If the script reports `is_outdated: true`, update the skill manually before prod
 
 ## Delivery Configuration
 
-The skill supports optional Telegram delivery in `v0.1.0` and includes a future-ready destination config example:
+The skill supports optional Telegram delivery in `v0.2.0` and includes a future-ready destination config example:
 
 ```text
 skills/adgine-daily-feeds/config/destinations.example.json
@@ -121,6 +133,8 @@ node skills/adgine-daily-feeds/scripts/telegram-send.mjs \
 ```
 
 ## Output
+
+API output should be the canonical source of truth. Local script outputs use the same report shape where possible.
 
 Default generated outputs:
 
@@ -166,6 +180,8 @@ Grades:
 
 ## Notes
 
+- Keep the skill simple: fetch or receive daily report JSON, then display or deliver it.
+- Crawling, URL resolution, scoring, deduplication, and scheduling should preferably live on the API/server side.
 - Sogou Weixin may rate-limit or block requests.
 - Sogou result pages usually do not expose reads, likes, comments, favorites, or collections.
 - Some Sogou redirect links expire and need manual or browser-based resolution to `mp.weixin.qq.com`.
