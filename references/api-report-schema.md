@@ -1,6 +1,6 @@
 # Daily Report API Schema
 
-Version: `v0.5.0`
+Version: `v0.6.0`
 
 The API layer returns generated daily report results only. Crawling, browser-based WeChat URL resolution, scoring, deduplication, and scheduling happen on the server side before this API is consumed.
 
@@ -143,6 +143,36 @@ Each displayed article item should use this shape:
   "ai_recommendation": "适合作为实操参考，观察别人如何把 GEO 方法落到具体项目。"
 }
 ```
+
+Supplemental X or Medium items can use the same item shape:
+
+```json
+{
+  "title": "Why Your Brand Isn’t Showing Up in ChatGPT",
+  "source": {
+    "platform": "medium",
+    "label": "Medium·Author",
+    "account_name": "Author"
+  },
+  "source_platform": "medium",
+  "published_at": "2026-06-09T10:25:59Z",
+  "published_label": "2026-06-09 18:25｜useful / 76",
+  "url": "https://medium.com/...",
+  "summary": "One short source summary.",
+  "tags": ["Medium", "ai-search", "geo"],
+  "metrics": {
+    "rss_tag": "ai-search"
+  },
+  "ai_recommendation": "One sentence explaining why this item is useful."
+}
+```
+
+Supported `source.platform` values for HTML rendering:
+
+- `weixin` / `weixin_mp`
+- `x` / `twitter`
+- `medium`
+- other strings fall back to a neutral source badge.
 
 ## Status Values
 

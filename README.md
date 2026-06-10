@@ -1,6 +1,6 @@
 # Adgine Daily Feeds
 
-Version: `v0.5.0`
+Version: `v0.6.0`
 
 `adgine-daily-feeds` is a Codex skill for consuming and delivering Chinese GEO/AEO daily report results. It is API-only: the server generates the daily report JSON, and the skill fetches or delivers that result.
 
@@ -10,6 +10,7 @@ Version: `v0.5.0`
 - Date-specific API: `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`.
 - User-readable daily report display.
 - Standalone temporary HTML report rendering with Light/Dark theme switch.
+- Platform-aware HTML cards for API-provided WeChat, X, and Medium sections.
 - Optional Telegram delivery with user-provided local config.
 - Local version checking.
 
@@ -65,6 +66,8 @@ node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
 
 Use the returned `report.sections` directly for display, Telegram delivery, or web feed rendering. See `references/api-report-schema.md`.
 
+When the API includes supplemental `X 观察` or `Medium 观察` sections, keep them in `report.sections`. The HTML renderer reads `source.platform` / `source_platform`, `summary`, `tags`, and `metrics` automatically.
+
 ## HTML Template
 
 Render the latest hosted report to a standalone HTML file:
@@ -107,7 +110,7 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs
 Compare against a manually supplied latest version:
 
 ```bash
-node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.5.0
+node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.0
 ```
 
 ## Delivery Configuration

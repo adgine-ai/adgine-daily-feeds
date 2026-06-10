@@ -1,6 +1,6 @@
 # Versioning
 
-Current version: `v0.5.0`
+Current version: `v0.6.0`
 
 Use semantic versioning:
 

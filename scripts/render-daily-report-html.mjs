@@ -6,6 +6,7 @@ import { dirname, resolve } from "node:path";
 const SKILL_ROOT = new URL("../", import.meta.url);
 const TEMPLATE_PATH = new URL("templates/daily-report.html", SKILL_ROOT);
 const DEFAULT_API_BASE = "https://daily.wefnews.com/api/reports/daily";
+const SKILL_VERSION = "v0.6.0";
 
 function readArg(name) {
   const prefix = `--${name}=`;
@@ -57,6 +58,14 @@ function normalizePayload(payload) {
       raw: payload.raw,
     };
   }
+  if (payload?.title && Array.isArray(payload.sections)) {
+    return {
+      ok: true,
+      date: payload.date || null,
+      report: payload,
+      raw: payload,
+    };
+  }
   throw new Error("Input does not contain a usable report.");
 }
 
@@ -102,6 +111,31 @@ function sourceLabel(item) {
   return item.source?.label || item.source_label || "未知";
 }
 
+function sourcePlatform(item) {
+  const source = typeof item.source === "object" ? item.source : null;
+  const raw = item.source_platform || item.platform || source?.platform || source?.id || sourceLabel(item);
+  const value = String(raw || "").toLowerCase();
+  if (value.includes("x") || value.includes("twitter")) {
+    return "x";
+  }
+  if (value.includes("medium")) {
+    return "medium";
+  }
+  if (value.includes("weixin") || value.includes("wechat") || value.includes("公众号")) {
+    return "weixin";
+  }
+  return "other";
+}
+
+function platformLabel(platform) {
+  return {
+    weixin: "公众号",
+    x: "X",
+    medium: "Medium",
+    other: "来源",
+  }[platform] || "来源";
+}
+
 function splitPublishedLabel(label) {
   const [publishedAt, quality] = String(label || "n/a").split("｜");
   return {
@@ -128,19 +162,42 @@ function renderItems(report) {
       const current = index;
       index += 1;
       const meta = splitPublishedLabel(item.published_label);
+      const platform = sourcePlatform(item);
       const recommendation = item.ai_recommendation
         ? `<div class="recommend">推荐：${escapeHtml(item.ai_recommendation)}</div>`
         : "";
-      return `<article class="card">
+      const summary = item.summary || item.key_info
+        ? `<div class="summary-text">${escapeHtml(item.summary || item.key_info)}</div>`
+        : "";
+      const tags = Array.isArray(item.tags) && item.tags.length
+        ? `<div class="tags">${item.tags.slice(0, 6).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>`
+        : "";
+      const metrics = item.metrics && typeof item.metrics === "object"
+        ? Object.entries(item.metrics)
+            .filter(([, value]) => value !== null && value !== undefined && value !== "")
+            .slice(0, 4)
+            .map(([key, value]) => `<span>${escapeHtml(key)}: ${escapeHtml(value)}</span>`)
+            .join("")
+        : "";
+      const metricsHtml = metrics ? `<div class="metrics">${metrics}</div>` : "";
+      return `<article class="card source-${escapeAttr(platform)}">
         <div class="title-row">
           <div class="index">${current}</div>
-          <a class="title" href="${escapeAttr(itemHref(item))}" target="_blank" rel="noreferrer">${escapeHtml(item.title)}</a>
+          <div class="title-block">
+            <div class="source-row">
+              <span class="platform-badge platform-${escapeAttr(platform)}">${escapeHtml(platformLabel(platform))}</span>
+              <span>${escapeHtml(sourceLabel(item))}</span>
+            </div>
+            <a class="title" href="${escapeAttr(itemHref(item))}" target="_blank" rel="noreferrer">${escapeHtml(item.title)}</a>
+          </div>
         </div>
         <div class="detail">
-          <span>来源：${escapeHtml(sourceLabel(item))}</span>
           <span>${escapeHtml(meta.publishedAt)}</span>
           <span class="quality">${escapeHtml(meta.quality)}</span>
         </div>
+        ${summary}
+        ${tags}
+        ${metricsHtml}
         ${recommendation}
       </article>`;
     }).join("");
@@ -158,6 +215,10 @@ function countMustRead(report) {
     const grade = item.quality?.grade || "";
     return String(label).includes("must_read") || grade === "must_read";
   }).length;
+}
+
+function countSources(report) {
+  return new Set(allReportItems(report).map((item) => sourcePlatform(item))).size;
 }
 
 function shortDate(value) {
@@ -178,18 +239,19 @@ function normalizeTheme(theme) {
 
 function renderHtml(template, report) {
   const content = `${renderConclusion(report)}${renderItems(report)}`;
-  const footer = `${(report.footer || "@Adgine.ai beta").replace(/^- /, "")} · CIO Daily 日报 · API v0.5.0`;
+  const footer = `${(report.footer || "@Adgine.ai beta").replace(/^- /, "")} · CIO Daily 日报 · API ${SKILL_VERSION}`;
   return template
     .replaceAll("{{title}}", escapeHtml(report.title || "CIO Daily 日报"))
     .replaceAll("{{theme}}", escapeHtml(normalizeTheme(readArg("theme"))))
     .replaceAll("{{date}}", escapeHtml(shortDate(report.display_captured_at || report.captured_at)))
     .replaceAll("{{displayScope}}", escapeHtml(report.display_scope || "来源：微信公众号"))
     .replaceAll("{{windowText}}", escapeHtml(formatWindow(report)))
-    .replaceAll("{{badge}}", escapeHtml("API v0.5.0 · daily.wefnews.com"))
+    .replaceAll("{{badge}}", escapeHtml(`API ${SKILL_VERSION} · daily.wefnews.com`))
     .replaceAll("{{sampledCount}}", escapeHtml(report.totals?.sampled_count ?? "-"))
     .replaceAll("{{windowCount}}", escapeHtml(report.totals?.window_count ?? "-"))
     .replaceAll("{{selectedCount}}", escapeHtml(report.totals?.selected_count ?? "-"))
     .replaceAll("{{mustReadCount}}", escapeHtml(countMustRead(report)))
+    .replaceAll("{{sourceCount}}", escapeHtml(report.totals?.source_count ?? countSources(report)))
     .replaceAll("{{content}}", content)
     .replaceAll("{{footer}}", escapeHtml(footer));
 }

@@ -135,7 +135,7 @@
     }
     .stats {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 10px;
       margin-bottom: 22px;
     }
@@ -211,6 +211,18 @@
       border-color: var(--brand-2);
       transform: translateY(-1px);
     }
+    .card.source-x {
+      border-left: 3px solid #111827;
+    }
+    body[data-theme="dark"] .card.source-x {
+      border-left-color: #f8fafc;
+    }
+    .card.source-medium {
+      border-left: 3px solid #00ab6c;
+    }
+    .card.source-weixin {
+      border-left: 3px solid #17b26a;
+    }
     .title-row {
       display: flex;
       align-items: flex-start;
@@ -228,6 +240,46 @@
       color: #fff;
       font-size: 13px;
       font-weight: 760;
+    }
+    .title-block {
+      min-width: 0;
+      flex: 1;
+    }
+    .source-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 3px;
+      color: var(--subtle);
+      font-size: 11px;
+    }
+    .platform-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      background: var(--chip);
+      color: var(--brand-2);
+      padding: 2px 7px;
+      font-size: 10px;
+      font-weight: 760;
+      line-height: 1.45;
+    }
+    .platform-x {
+      background: #111827;
+      color: #fff;
+    }
+    body[data-theme="dark"] .platform-x {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .platform-medium {
+      background: #00ab6c;
+      color: #fff;
+    }
+    .platform-weixin {
+      background: #17b26a;
+      color: #fff;
     }
     .title {
       min-width: 0;
@@ -256,6 +308,32 @@
       color: var(--brand-2);
       padding: 2px 8px;
       font-size: 11px;
+    }
+    .summary-text {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+    .tags,
+    .metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .tags span,
+    .metrics span {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--subtle);
+      font-size: 11px;
+      line-height: 1.4;
+      padding: 3px 8px;
+    }
+    .metrics span {
+      background: var(--chip);
+      color: var(--muted);
     }
     .recommend {
       margin-top: 8px;
@@ -301,6 +379,7 @@
       <div class="stat"><div class="num">{{windowCount}}</div><div class="label">窗口内</div></div>
       <div class="stat"><div class="num">{{selectedCount}}</div><div class="label">精选</div></div>
       <div class="stat"><div class="num">{{mustReadCount}}</div><div class="label">Must Read</div></div>
+      <div class="stat"><div class="num">{{sourceCount}}</div><div class="label">来源</div></div>
     </section>
     {{content}}
     <footer class="footer">{{footer}}</footer>

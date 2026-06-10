@@ -1,12 +1,12 @@
 ---
 name: adgine-daily-feeds
 description: Use this skill to fetch, display, summarize, render HTML, or deliver Adgine/CIO Daily Chinese GEO/AEO daily report results from the hosted daily.wefnews.com API, with optional Telegram delivery using user-provided configuration.
-version: v0.5.0
+version: v0.6.0
 ---
 
 # Adgine Daily Feeds
 
-Version: `v0.5.0`
+Version: `v0.6.0`
 
 Use this skill when the task is to fetch, display, summarize, render HTML, or deliver an Adgine/CIO Daily style daily report for `GEO / AEO`.
 
@@ -14,18 +14,19 @@ This skill is API-only. It consumes a server-generated daily report result and d
 
 ## Scope
 
-Current supported source:
+Current supported sources:
 
 - Server-generated WeChat/Sogou daily report from `daily.wefnews.com`.
+- API-provided supplemental X and Medium sections when present in `report.sections`.
 
 Default API endpoint:
 
 - Latest report: `https://daily.wefnews.com/api/reports/daily/latest`
 - Date report: `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`
 
-Not in v0.5.0:
+Not in v0.6.0:
 
-- X/Twitter, Medium, Reddit, Xiaohongshu, Douyin, GitHub, or competitor feeds.
+- Local X/Twitter, Medium, Reddit, Xiaohongshu, Douyin, GitHub, or competitor crawling.
 - Local Sogou Weixin crawling or browser-based WeChat URL resolution.
 - Direct WeChat private API access.
 - Reliable WeChat engagement metrics such as reads, likes, comments, or favorites.
@@ -43,6 +44,7 @@ Not in v0.5.0:
    - User version: concise, readable, only high-quality or scannable items.
    - For a temporary HTML page, run `scripts/render-daily-report-html.mjs`.
    - HTML output defaults to light theme and includes a Light/Dark switch.
+   - HTML cards parse `source.platform`, `source_platform`, `summary`, `tags`, and `metrics` for WeChat, X, Medium, and future sources.
    - Operations detail should stay in API `meta` and `warnings` unless the user asks for it.
 
 3. Preserve source links from the API.
@@ -115,6 +117,7 @@ The skill includes a minimal runnable script set under `scripts/`.
   - Defaults to the same hosted latest-report API.
   - Supports `--date=YYYY-MM-DD`, `--api-url=<url>`, `--input=<path>`, `--output=<path>`, and `--theme=light|dark`.
   - Default theme is `light`; the generated page also includes an in-page Light/Dark switch.
+  - Renders platform badges and optional summaries/tags/metrics for `weixin`, `x`, and `medium` items.
   - Uses `templates/daily-report.html`.
   - Use this when WorkBuddy or another agent needs a temporary readable HTML page without building a web app.
 
@@ -130,7 +133,7 @@ Default output when saving API results:
 
 ## Delivery Configuration
 
-`v0.5.0` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
+`v0.6.0` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
 
 - Example config: `config/destinations.example.json`
 - Local config: `config/destinations.local.json` or `config/destinations.json`
@@ -167,6 +170,7 @@ If there is no remote/latest version supplied, report the local version and cons
 ## Safety
 
 - Do not use private WeChat APIs or personal account actions unless explicitly authorized.
+- Do not crawl X or Medium locally from the skill; consume API-provided sections unless the user explicitly asks for a separate capture workflow.
 - Do not fabricate read/like/comment/favorite counts; Sogou result pages usually do not expose them.
 - Do not send Feishu messages unless the user asks for sending or the automation run specifically requires it.
 - Do not hardcode Feishu App ID, App Secret, Telegram bot token, webhook, receive_id, chat_id, or user_id into the skill. Delivery must be configured by the user outside committed source.
