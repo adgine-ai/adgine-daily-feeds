@@ -1,12 +1,15 @@
 # Versioning
 
-Current version: `v0.6.0`
+Current version: `v0.6.1`
 
-Use semantic versioning:
+Use a human-approved version lane:
 
-- Patch `v0.0.x`: wording, filters, scoring threshold tweaks, bug fixes that do not change output schema.
-- Minor `v0.x.0`: new source type, output mode, normalized fields, automation workflow, or removal of old fallback behavior.
-- Major `vX.0.0`: breaking report schema or incompatible skill workflow changes.
+- Default lane: keep releases within the current GitHub minor version lane, for example `v0.6.x` when GitHub is at `v0.6.0`.
+- Patch `v0.x.y`: wording, filters, default endpoint changes, scoring threshold tweaks, bug fixes, docs, and backwards-compatible script behavior.
+- Minor `v0.(x+1).0`: only bump when the user explicitly decides to move out of the current minor lane.
+- Major `v1.0.x`: only bump when the user explicitly decides the skill is stable enough for a `1.0` contract or approves a breaking workflow/schema change.
+
+Do not automatically bump to a new minor or major version based on semantic-versioning interpretation alone. The user decides those transitions manually.
 
 When bumping version:
 

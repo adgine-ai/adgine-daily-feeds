@@ -1,6 +1,6 @@
 # Adgine Daily Feeds
 
-Version: `v0.6.0`
+Version: `v0.6.1`
 
 `adgine-daily-feeds` is a Codex skill for consuming and delivering Chinese GEO/AEO daily report results. It is API-only: the server generates the daily report JSON, and the skill fetches or delivers that result.
 
@@ -11,6 +11,8 @@ Version: `v0.6.0`
 - User-readable daily report display.
 - Standalone temporary HTML report rendering with Light/Dark theme switch.
 - Platform-aware HTML cards for API-provided WeChat, X, and Medium sections.
+- `latest` report naming based on the Asia/Shanghai window end date, for example `CIO Daily 日报 | 2026-06-10`.
+- Multi-source totals such as `x_count` and `medium_count` when the API includes those sections.
 - Optional Telegram delivery with user-provided local config.
 - Local version checking.
 
@@ -68,6 +70,12 @@ Use the returned `report.sections` directly for display, Telegram delivery, or w
 
 When the API includes supplemental `X 观察` or `Medium 观察` sections, keep them in `report.sections`. The HTML renderer reads `source.platform` / `source_platform`, `summary`, `tags`, and `metrics` automatically.
 
+Notes:
+
+- `latest` means the most recent generated window-end report currently available from the hosted API. It can temporarily lag behind the wall-clock day when deployment or publication is delayed.
+- `report.title` and top-level `date` are report dates, not per-item publish dates.
+- Do not infer X or Medium sections from previous dates. Use only the sections returned by the current API response.
+
 ## HTML Template
 
 Render the latest hosted report to a standalone HTML file:
@@ -110,8 +118,10 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs
 Compare against a manually supplied latest version:
 
 ```bash
-node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.0
+node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.1
 ```
+
+Version policy: keep normal releases in the current GitHub minor lane and only bump the last number. Do not bump to a new minor or major version unless the user explicitly approves that transition.
 
 ## Delivery Configuration
 

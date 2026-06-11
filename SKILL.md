@@ -1,30 +1,43 @@
 ---
 name: adgine-daily-feeds
 description: Use this skill to fetch, display, summarize, render HTML, or deliver Adgine/CIO Daily Chinese GEO/AEO daily report results from the hosted daily.wefnews.com API, with optional Telegram delivery using user-provided configuration.
-version: v0.6.0
+version: v0.6.1
 ---
 
 # Adgine Daily Feeds
 
-Version: `v0.6.0`
+Version: `v0.6.1`
 
 Use this skill when the task is to fetch, display, summarize, render HTML, or deliver an Adgine/CIO Daily style daily report for `GEO / AEO`.
 
-This skill is API-only. It consumes a server-generated daily report result and does not crawl Sogou Weixin locally.
+This skill is API-only. It consumes server-generated feed and daily report results and does not crawl Sogou Weixin locally.
 
 ## Scope
 
 Current supported sources:
 
 - Server-generated WeChat/Sogou daily report from `daily.wefnews.com`.
-- API-provided supplemental X and Medium sections when present in `report.sections`.
+- API-provided supplemental `X 观察` and `Medium 观察` sections when present in `report.sections`.
 
-Default API endpoint:
+Default API endpoints:
 
+- Feed stream: `https://daily.wefnews.com/api/feed`
 - Latest report: `https://daily.wefnews.com/api/reports/daily/latest`
-- Date report: `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`
+- Date report: `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD&slot=10am|18pm|22pm|latest`
 
-Not in v0.6.0:
+Default behavior:
+
+- Use the feed endpoint by default because it is the real-time/incremental view.
+- Use the daily report endpoint only when the user asks for a fixed daily report, report snapshot, or specific date/slot report.
+
+Report slot semantics:
+
+- The production app can generate multiple report windows per day.
+- Current known slots are `10am`, `18pm`, and planned `22pm`.
+- `latest` means the newest generated report available on the hosted API; when an `18pm` report exists for a date it may be newer than that date's `10am` report.
+- `report.window.slot` and top-level `slot`, when present, identify the report window. Do not infer slot from wall-clock time.
+
+Not in v0.6.1:
 
 - Local X/Twitter, Medium, Reddit, Xiaohongshu, Douyin, GitHub, or competitor crawling.
 - Local Sogou Weixin crawling or browser-based WeChat URL resolution.
@@ -34,23 +47,29 @@ Not in v0.6.0:
 
 ## Core Workflow
 
-1. Fetch the Daily Report API.
+1. Fetch the API.
    - Read `references/api-report-schema.md` for the response shape.
-   - Default to `https://daily.wefnews.com/api/reports/daily/latest` unless the user supplies a different API URL.
+   - Default to `https://daily.wefnews.com/api/feed` unless the user supplies a different API URL.
+   - For the fixed latest report snapshot, use `https://daily.wefnews.com/api/reports/daily/latest`.
    - For a specific date, use `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`.
    - Use the API result directly for display or delivery.
+   - Treat `report.title` / top-level `date` as the report end date in `Asia/Shanghai`, not as the publication date of every item.
+   - Treat `slot` / `report.window.slot` as the report window identity.
 
 2. Produce simple report outputs.
    - User version: concise, readable, only high-quality or scannable items.
    - For a temporary HTML page, run `scripts/render-daily-report-html.mjs`.
    - HTML output defaults to light theme and includes a Light/Dark switch.
    - HTML cards parse `source.platform`, `source_platform`, `summary`, `tags`, and `metrics` for WeChat, X, Medium, and future sources.
+   - When `display_scope` is `来源：微信公众号 / X / Medium`, preserve the multi-source structure instead of flattening all items into one generic list.
+   - For feed stream output, preserve item-level `href`, `slot`, `captured_display`, `published_display`, and `section_title`.
    - Operations detail should stay in API `meta` and `warnings` unless the user asks for it.
 
 3. Preserve source links from the API.
    - In Feishu or web feed, put the link on the item title.
    - Avoid showing long raw URLs in the visible report body.
-   - If an API item only has a temporary or fallback link, report that state instead of pretending it is permanent.
+- If an API item only has a temporary or fallback link, report that state instead of pretending it is permanent.
+- For WeChat items, prefer `href_url` / `href` when it starts with `https://mp.weixin.qq.com/`; do not expose Sogou redirect links as if they are original article links.
 
 ## Quality Standard
 
@@ -95,6 +114,7 @@ Rules:
 - The user version should not expose query terms, raw scoring internals, or long URLs.
 - Each item needs a one-sentence recommendation reason.
 - If a source is blocked, unresolved, or only partially visible, say so explicitly.
+- Do not assume X / Medium are always present for every date. Missing sections can mean the hosted report did not include supplement data for that window.
 
 ## Bundled Scripts
 
@@ -107,15 +127,18 @@ The skill includes a minimal runnable script set under `scripts/`.
   - If the local version is older than the supplied latest version, tell the user to manually update the skill before production use.
 
 - `scripts/fetch-daily-report-api.mjs`
-  - Fetches the server-generated daily report JSON from `daily.wefnews.com`.
-  - Defaults to `https://daily.wefnews.com/api/reports/daily/latest`.
-  - Supports `--date=YYYY-MM-DD`, `--api-url=<url>`, and `--output=<path>`.
-  - Use this whenever the user wants the latest report data.
+  - Fetches the server-generated feed or daily report JSON from `daily.wefnews.com`.
+  - Defaults to `https://daily.wefnews.com/api/feed`.
+  - Supports `--report`, `--date=YYYY-MM-DD`, `--slot=10am|18pm|22pm`, `--start-at="YYYY-MM-DD HH:mm"`, `--end-at="YYYY-MM-DD HH:mm"`, `--source=all|weixin_mp|x|medium`, `--limit=N`, `--api-url=<url>`, and `--output=<path>`.
+  - Use the default feed mode whenever the user wants current feed data.
+  - Use `--report` when the user wants a fixed daily report snapshot.
+  - Remember that `latest` means the latest generated window-end report available on the hosted API, not necessarily the current wall-clock day if deployment or data publication is lagging.
+  - Feed mode defaults to the natural rolling window from previous-day `10:00` Asia/Shanghai to current wall-clock time. For example, at `2026-06-11 09:42`, the request window is `2026-06-10 10:00` to `2026-06-11 09:42`.
 
 - `scripts/render-daily-report-html.mjs`
   - Fetches the hosted API or reads a saved API JSON, then renders a standalone HTML page.
   - Defaults to the same hosted latest-report API.
-  - Supports `--date=YYYY-MM-DD`, `--api-url=<url>`, `--input=<path>`, `--output=<path>`, and `--theme=light|dark`.
+  - Supports `--date=YYYY-MM-DD`, `--slot=10am|18pm`, `--api-url=<url>`, `--input=<path>`, `--output=<path>`, and `--theme=light|dark`.
   - Default theme is `light`; the generated page also includes an in-page Light/Dark switch.
   - Renders platform badges and optional summaries/tags/metrics for `weixin`, `x`, and `medium` items.
   - Uses `templates/daily-report.html`.
@@ -133,7 +156,7 @@ Default output when saving API results:
 
 ## Delivery Configuration
 
-`v0.6.0` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
+`v0.6.1` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
 
 - Example config: `config/destinations.example.json`
 - Local config: `config/destinations.local.json` or `config/destinations.json`
@@ -149,6 +172,8 @@ Rules:
 ## Repository Hints
 
 When working inside `cio-daily`, this skill should still consume the hosted API unless the user explicitly asks to modify the production app.
+
+If the user is debugging why `daily.wefnews.com` shows an older title date such as `CIO Daily 日报 | 2026-06-09` while a newer local report exists, first verify the hosted API output. The likely cause is deployment/data lag, not the HTML template hardcoding the date.
 
 Reference files:
 
@@ -171,6 +196,7 @@ If there is no remote/latest version supplied, report the local version and cons
 
 - Do not use private WeChat APIs or personal account actions unless explicitly authorized.
 - Do not crawl X or Medium locally from the skill; consume API-provided sections unless the user explicitly asks for a separate capture workflow.
+- Do not infer missing X / Medium sections from prior dates. Use only what the hosted API actually returns for the requested date.
 - Do not fabricate read/like/comment/favorite counts; Sogou result pages usually do not expose them.
 - Do not send Feishu messages unless the user asks for sending or the automation run specifically requires it.
 - Do not hardcode Feishu App ID, App Secret, Telegram bot token, webhook, receive_id, chat_id, or user_id into the skill. Delivery must be configured by the user outside committed source.

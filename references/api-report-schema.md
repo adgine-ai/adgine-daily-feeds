@@ -1,6 +1,6 @@
 # Daily Report API Schema
 
-Version: `v0.6.0`
+Version: `v0.6.1`
 
 The API layer returns generated daily report results only. Crawling, browser-based WeChat URL resolution, scoring, deduplication, and scheduling happen on the server side before this API is consumed.
 
@@ -8,8 +8,9 @@ The API layer returns generated daily report results only. Crawling, browser-bas
 
 Keep the skill simple:
 
-- Fetch a generated daily report JSON from the API.
-- Display it, summarize it, or deliver it to a configured channel.
+- Fetch the hosted feed JSON by default.
+- Fetch a generated daily report JSON only when the user asks for a fixed report snapshot or a specific date.
+- Display, summarize, or deliver the API result to a configured channel.
 - Do not make every agent crawl Sogou Weixin or resolve WeChat links.
 - If the API is unavailable, report the missing state. This skill no longer includes local crawling fallback.
 
@@ -19,7 +20,8 @@ Default hosted endpoint:
 
 ```http
 GET https://daily.wefnews.com/api/reports/daily/latest
-GET https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD
+GET https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD&slot=10am|18pm|22pm|latest
+GET https://daily.wefnews.com/api/feed
 ```
 
 The current hosted response is:
@@ -27,12 +29,20 @@ The current hosted response is:
 ```json
 {
   "ok": true,
-  "date": "2026-06-09",
+  "date": "2026-06-10",
   "report": {}
 }
 ```
 
 Use `report.sections` directly. If `ok` is not `true`, treat the report as unavailable and do not fabricate content.
+
+Important date and slot semantics:
+
+- `date` is the report date for the Asia/Shanghai report window end.
+- `slot` or `report.window.slot`, when present, identifies the report window. Current values are `10am` and `18pm`.
+- `latest` means the newest generated report currently available from the hosted API. If an `18pm` report exists, it may be newer than the same date's `10am` report.
+- `report.title` should match that report date, for example `CIO Daily 日报 | 2026-06-10`.
+- Individual items inside `report.sections` can have `published_at` earlier than `date`, because they are selected from the prior 24-hour window.
 
 Future normalized endpoint:
 
@@ -52,8 +62,9 @@ Default parameters:
 {
   "api_version": "v1",
   "status": "ready",
-  "report_id": "cio_daily_2026_06_09_weixin_sogou_10am",
-  "date": "2026-06-09",
+  "report_id": "cio_daily_2026_06_10_weixin_sogou_10am",
+  "date": "2026-06-10",
+  "slot": "10am",
   "timezone": "Asia/Shanghai",
   "source": {
     "id": "weixin_sogou",
@@ -61,15 +72,17 @@ Default parameters:
     "raw_provider": "sogou_weixin"
   },
   "window": {
-    "start_at": "2026-06-08T10:00:00+08:00",
-    "end_at": "2026-06-09T10:00:00+08:00"
+    "start_at": "2026-06-09T10:00:00+08:00",
+    "end_at": "2026-06-10T10:00:00+08:00",
+    "slot": "10am",
+    "end_hour": 10
   },
-  "generated_at": "2026-06-09T10:17:00+08:00",
+  "generated_at": "2026-06-10T10:28:00+08:00",
   "report": {
-    "title": "CIO Daily 日报 | 2026-06-09",
+    "title": "CIO Daily 日报 | 2026-06-10",
     "render_style": "user_daily",
-    "display_scope": "来源：微信公众号",
-    "display_captured_at": "2026-06-09 10:00",
+    "display_scope": "来源：微信公众号 / X / Medium",
+    "display_captured_at": "2026-06-10 10:00",
     "sections": [
       {
         "id": "conclusion",
@@ -95,15 +108,28 @@ Default parameters:
         "id": "further_reading",
         "title": "延伸阅读",
         "items": []
+      },
+      {
+        "id": "x_observation",
+        "title": "X 观察",
+        "items": []
+      },
+      {
+        "id": "medium_observation",
+        "title": "Medium 观察",
+        "items": []
       }
     ],
     "footer": "- @Adgine.ai beta"
   },
   "items": [],
   "meta": {
-    "sampled_count": 363,
-    "window_count": 67,
-    "selected_count": 10,
+    "sampled_count": 364,
+    "window_count": 61,
+    "selected_count": 16,
+    "source_count": 3,
+    "x_count": 2,
+    "medium_count": 4,
     "resolved_url_count": 10,
     "unresolved_url_count": 0,
     "quality_distribution": {
@@ -133,6 +159,7 @@ Each displayed article item should use this shape:
   "published_at": "2026-06-08T22:56:00+08:00",
   "published_label": "2026-06-08 22:56｜useful / 73",
   "url": "https://mp.weixin.qq.com/...",
+  "href_url": "https://mp.weixin.qq.com/...",
   "fallback_url": "https://weixin.sogou.com/link?...",
   "url_status": "resolved",
   "quality": {
@@ -167,12 +194,91 @@ Supplemental X or Medium items can use the same item shape:
 }
 ```
 
+Top-level `report.totals` may also include optional multi-source counters when the hosted report contains supplement sections:
+
+```json
+{
+  "sampled_count": 364,
+  "window_count": 61,
+  "selected_count": 16,
+  "source_count": 3,
+  "x_count": 2,
+  "medium_count": 4
+}
+```
+
 Supported `source.platform` values for HTML rendering:
 
 - `weixin` / `weixin_mp`
 - `x` / `twitter`
 - `medium`
 - other strings fall back to a neutral source badge.
+
+## Feed Stream Endpoint
+
+Use the feed endpoint by default. It is the real-time/incremental view for agents and skills. Use it when the user asks to browse all data, build an unread/new-item view, inspect historical items across reports, or simply asks for the latest feed data:
+
+```http
+GET https://daily.wefnews.com/api/feed
+```
+
+Default feed window:
+
+- The endpoint defaults to the natural rolling window from previous-day `10:00` Asia/Shanghai to current wall-clock time.
+- Example: at `2026-06-11 09:42`, the default window is `2026-06-10 10:00` through `2026-06-11 09:42`.
+- Override with query params:
+
+```http
+GET https://daily.wefnews.com/api/feed?start_at=2026-06-10%2010%3A00&end_at=2026-06-11%2009%3A42&source=all&limit=50
+```
+
+Supported feed params:
+
+- `start_at`: optional window start, interpreted as Asia/Shanghai when no timezone is supplied.
+- `end_at`: optional window end, interpreted as Asia/Shanghai when no timezone is supplied.
+- `source`: optional, default `all`; supported values include `all`, `weixin_mp`, `x`, and `medium`.
+- `limit`: optional max item count; the hosted API may cap the value.
+
+Typical response:
+
+```json
+{
+  "ok": true,
+  "generated_at": "2026-06-10T11:00:00.000Z",
+  "window": {
+    "start_at": "2026-06-10 10:00",
+    "end_at": "2026-06-11 09:42",
+    "timezone": "Asia/Shanghai",
+    "rule": "previous_day_10am_to_current_time"
+  },
+  "dates": ["2026-06-10", "2026-06-09"],
+  "total": 24,
+  "items": [
+    {
+      "id": "2026-06-10-10am:今日精选:1:https://mp.weixin.qq.com/...",
+      "date": "2026-06-10",
+      "slot": "10am",
+      "report_title": "CIO Daily 日报 | 2026-06-10",
+      "section_title": "今日精选",
+      "title": "GEO 内容怎么写，AI 才更容易引用?",
+      "source": "公众号·一路凯歌服务平台",
+      "href": "https://mp.weixin.qq.com/...",
+      "href_url": "https://mp.weixin.qq.com/...",
+      "published_display": "2026-06-10 08:12",
+      "captured_display": "2026-06-10 10:00",
+      "sort_time": 178104?000
+    }
+  ]
+}
+```
+
+Feed behavior:
+
+- Preserve item `id` for unread/new-item state.
+- Use `href` / `href_url` for title links.
+- Display `captured_display` as the feed card time unless the user specifically asks for original post time.
+- Preserve `slot`; do not collapse 10am and 18pm items into a single indistinguishable daily bucket.
+- Do not show raw Sogou redirect URLs when an `mp.weixin.qq.com` link is available.
 
 ## Status Values
 
@@ -193,12 +299,14 @@ Item `url_status`:
 
 When API is available:
 
-1. Request `https://daily.wefnews.com/api/reports/daily/latest` by default.
-2. For a specific date, request `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`.
-3. If the hosted response has `ok: true`, use `report.sections` for display/delivery.
-4. If the future normalized response has `status` as `ready` or `partial`, use `report.sections`.
-5. Show warnings only when the user asks for operational detail or the report is partial.
-6. Do not rerun local crawling.
+1. Request `https://daily.wefnews.com/api/feed` by default.
+2. For a fixed latest daily report, request `https://daily.wefnews.com/api/reports/daily/latest`.
+3. For a specific date, request `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`.
+4. If the hosted report response has `ok: true`, use `report.sections` for display/delivery.
+5. Preserve `report.sections` order. Do not merge `X 观察` and `Medium 观察` into the WeChat sections unless the user explicitly asks for a custom output format.
+6. If the future normalized response has `status` as `ready` or `partial`, use `report.sections`.
+7. Show warnings only when the user asks for operational detail or the report is partial.
+8. Do not rerun local crawling.
 
 When API is unavailable:
 

@@ -1,6 +1,6 @@
 # Adgine Daily Feeds
 
-版本：`v0.6.0`
+版本：`v0.6.1`
 
 `adgine-daily-feeds` 是一个用于消费和分发中文 GEO/AEO 日报结果的 Codex Skill。当前是 API-only：服务端生成日报 JSON，Skill 只负责获取、展示或分发结果。
 
@@ -11,6 +11,8 @@
 - 用户可读日报展示。
 - 独立临时 HTML 日报渲染，支持 Light/Dark 切换。
 - HTML 卡片可识别 API 提供的微信公众号、X、Medium section。
+- `latest` 报告按 `Asia/Shanghai` 的窗口结束日期命名，例如 `CIO Daily 日报 | 2026-06-10`。
+- 当 API 提供 `X 观察`、`Medium 观察` 时，保留多源 section 与 `x_count` / `medium_count` 等 totals。
 - 使用用户本地配置推送到 Telegram。
 - 本地版本检测。
 
@@ -66,7 +68,13 @@ node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
 
 直接使用返回的 `report.sections` 做展示、Telegram 推送或 Web feed 渲染。具体结构见 `references/api-report-schema.md`。
 
-如果 API 临时返回 `X 观察` 或 `Medium 观察` section，保持它们在 `report.sections` 中即可。HTML 渲染器会自动读取 `source.platform` / `source_platform`、`summary`、`tags`、`metrics`。
+如果 API 返回 `X 观察` 或 `Medium 观察` section，保持它们在 `report.sections` 中即可。HTML 渲染器会自动读取 `source.platform` / `source_platform`、`summary`、`tags`、`metrics`。
+
+注意：
+
+- `latest` 表示“当前线上可用的最新窗口日报”，不保证一定等于当前自然日；如果线上部署或数据发布滞后，`latest` 可能暂时还指向上一期。
+- `report.title` / `date` 是日报窗口结束日期，不等于每篇文章自己的发布时间。
+- 不要从前一天 report 推断今天也一定有 `X / Medium` section；必须以 API 当次返回为准。
 
 ## HTML 模板
 
@@ -110,8 +118,10 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs
 和手动指定的最新版本比较：
 
 ```bash
-node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.0
+node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.1
 ```
+
+版本策略：常规发布沿用 GitHub 当前 minor 版本线，只升级最后一位。不要因为语义化版本判断自动升级到新的 minor 或 major 版本，这两个版本线由用户人工决定。
 
 ## 推送配置
 

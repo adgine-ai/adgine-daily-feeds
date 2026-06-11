@@ -4,11 +4,41 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
 const DEFAULT_API_BASE = "https://daily.wefnews.com/api/reports/daily";
+const DEFAULT_FEED_API = "https://daily.wefnews.com/api/feed";
 
 function readArg(name) {
   const prefix = `--${name}=`;
   const match = process.argv.find((arg) => arg.startsWith(prefix));
   return match ? match.slice(prefix.length) : null;
+}
+
+function shanghaiParts(date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  return Object.fromEntries(parts.map((part) => [part.type, part.value]));
+}
+
+function shanghaiTimeToEpochMs(dateSlug, time = "00:00:00") {
+  return Date.parse(`${dateSlug}T${time}+08:00`);
+}
+
+function defaultFeedWindow(now = new Date()) {
+  const current = shanghaiParts(now);
+  const todayStartMs = shanghaiTimeToEpochMs(`${current.year}-${current.month}-${current.day}`);
+  const yesterdayStart = new Date(todayStartMs - 24 * 60 * 60 * 1000);
+  const previous = shanghaiParts(yesterdayStart);
+  return {
+    start_at: `${previous.year}-${previous.month}-${previous.day} 10:00`,
+    end_at: `${current.year}-${current.month}-${current.day} ${current.hour}:${current.minute}`,
+  };
 }
 
 function buildUrl() {
@@ -17,10 +47,26 @@ function buildUrl() {
     return explicitUrl;
   }
 
+  if (!process.argv.includes("--report")) {
+    const url = new URL(DEFAULT_FEED_API);
+    const window = defaultFeedWindow();
+    url.searchParams.set("start_at", readArg("start-at") || process.env.ADGINE_DAILY_FEEDS_START_AT || window.start_at);
+    url.searchParams.set("end_at", readArg("end-at") || process.env.ADGINE_DAILY_FEEDS_END_AT || window.end_at);
+    const source = readArg("source") || process.env.ADGINE_DAILY_FEEDS_SOURCE;
+    const limit = readArg("limit") || process.env.ADGINE_DAILY_FEEDS_LIMIT;
+    if (source) url.searchParams.set("source", source);
+    if (limit) url.searchParams.set("limit", limit);
+    return url.toString();
+  }
+
   const date = readArg("date");
   if (date) {
     const url = new URL(DEFAULT_API_BASE);
     url.searchParams.set("date", date);
+    const slot = readArg("slot");
+    if (slot) {
+      url.searchParams.set("slot", slot);
+    }
     return url.toString();
   }
 
@@ -33,7 +79,20 @@ function normalizeResponse(data) {
       ok: true,
       source: "hosted_api",
       date: data.date || data.report.date || null,
+      slot: data.slot || data.report?.window?.slot || null,
       report: data.report,
+      raw: data,
+    };
+  }
+
+  if (data?.ok === true && Array.isArray(data.items)) {
+    return {
+      ok: true,
+      source: "hosted_feed_api",
+      date: data.dates?.[0] || null,
+      slot: null,
+      report: null,
+      feed: data,
       raw: data,
     };
   }
@@ -43,6 +102,7 @@ function normalizeResponse(data) {
       ok: true,
       source: "normalized_api",
       date: data.date || null,
+      slot: data.slot || data.report?.window?.slot || null,
       report: data.report,
       raw: data,
     };
@@ -88,11 +148,15 @@ async function main() {
     api_url: url,
     source: normalized.source,
     date: normalized.date || null,
+    slot: normalized.slot || null,
+    window: normalized.feed?.window || null,
     title: normalized.report?.title || null,
     sections: normalized.report?.sections?.map((section) => ({
       title: section.title,
       item_count: section.items?.length || 0,
     })) || [],
+    feed_total: normalized.feed?.total ?? null,
+    feed_dates: normalized.feed?.dates || null,
     output: output || null,
     error: normalized.ok ? null : normalized.error,
   }, null, 2));

@@ -6,7 +6,7 @@ import { dirname, resolve } from "node:path";
 const SKILL_ROOT = new URL("../", import.meta.url);
 const TEMPLATE_PATH = new URL("templates/daily-report.html", SKILL_ROOT);
 const DEFAULT_API_BASE = "https://daily.wefnews.com/api/reports/daily";
-const SKILL_VERSION = "v0.6.0";
+const SKILL_VERSION = (await readFile(new URL("VERSION", SKILL_ROOT), "utf8")).trim();
 
 function readArg(name) {
   const prefix = `--${name}=`;
@@ -36,6 +36,10 @@ function buildApiUrl() {
   if (date) {
     const url = new URL(DEFAULT_API_BASE);
     url.searchParams.set("date", date);
+    const slot = readArg("slot");
+    if (slot) {
+      url.searchParams.set("slot", slot);
+    }
     return url.toString();
   }
   return `${DEFAULT_API_BASE}/latest`;
