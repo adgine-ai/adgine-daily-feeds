@@ -1,14 +1,17 @@
 # Adgine Daily Feeds
 
-版本：`v0.6.1`
+版本：`v0.6.2`
 
-`adgine-daily-feeds` 是一个用于消费和分发中文 GEO/AEO 日报结果的 Codex Skill。当前是 API-only：服务端生成日报 JSON，Skill 只负责获取、展示或分发结果。
+`adgine-daily-feeds` 是一个用于消费和分发中文 GEO/AEO feed、日报、周报结果的 Codex Skill。当前是 API-only：服务端生成 JSON，Skill 只负责获取、渲染或分发结果。
 
 ## 已支持
 
 - 默认线上 API：`https://daily.wefnews.com/api/reports/daily/latest`。
 - 指定日期 API：`https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`。
+- 实时 feed API：`https://daily.wefnews.com/api/feed`。
+- 周报 API：`https://daily.wefnews.com/api/reports/weekly/latest`。
 - 用户可读日报展示。
+- 用户可读周报展示。
 - 独立临时 HTML 日报渲染，支持 Light/Dark 切换。
 - HTML 卡片可识别 API 提供的微信公众号、X、Medium section。
 - `latest` 报告按 `Asia/Shanghai` 的窗口结束日期命名，例如 `CIO Daily 日报 | 2026-06-10`。
@@ -50,6 +53,12 @@ adgine-daily-feeds/
 拉取最新线上日报：
 
 ```bash
+node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs --report
+```
+
+拉取默认实时 feed：
+
+```bash
 node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs
 ```
 
@@ -64,6 +73,21 @@ node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs --date=2026-06
 ```bash
 node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
   --output=skills/adgine-daily-feeds/data/feed/latest-report.json
+```
+
+拉取最新周报：
+
+```bash
+node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs --weekly
+```
+
+拉取指定周报区间：
+
+```bash
+node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
+  --weekly \
+  --start-date=2026-06-08 \
+  --end-date=2026-06-12
 ```
 
 直接使用返回的 `report.sections` 做展示、Telegram 推送或 Web feed 渲染。具体结构见 `references/api-report-schema.md`。
@@ -109,6 +133,14 @@ node skills/adgine-daily-feeds/scripts/render-daily-report-html.mjs \
   --output=skills/adgine-daily-feeds/data/html/latest-report.html
 ```
 
+渲染周报：
+
+```bash
+node skills/adgine-daily-feeds/scripts/render-daily-report-html.mjs \
+  --weekly \
+  --output=skills/adgine-daily-feeds/data/html/latest-weekly.html
+```
+
 ## 版本检测
 
 ```bash
@@ -118,7 +150,7 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs
 和手动指定的最新版本比较：
 
 ```bash
-node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.1
+node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.2
 ```
 
 版本策略：常规发布沿用 GitHub 当前 minor 版本线，只升级最后一位。不要因为语义化版本判断自动升级到新的 minor 或 major 版本，这两个版本线由用户人工决定。

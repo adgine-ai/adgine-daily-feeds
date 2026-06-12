@@ -1,14 +1,17 @@
 # Adgine Daily Feeds
 
-Version: `v0.6.1`
+Version: `v0.6.2`
 
-`adgine-daily-feeds` is a Codex skill for consuming and delivering Chinese GEO/AEO daily report results. It is API-only: the server generates the daily report JSON, and the skill fetches or delivers that result.
+`adgine-daily-feeds` is a Codex skill for consuming and delivering Chinese GEO/AEO feed, daily report, and weekly report results. It is API-only: the server generates the JSON, and the skill fetches, renders, or delivers that result.
 
 ## Supported
 
 - Default hosted API: `https://daily.wefnews.com/api/reports/daily/latest`.
 - Date-specific API: `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD`.
+- Real-time feed API: `https://daily.wefnews.com/api/feed`.
+- Weekly report API: `https://daily.wefnews.com/api/reports/weekly/latest`.
 - User-readable daily report display.
+- User-readable weekly report display.
 - Standalone temporary HTML report rendering with Light/Dark theme switch.
 - Platform-aware HTML cards for API-provided WeChat, X, and Medium sections.
 - `latest` report naming based on the Asia/Shanghai window end date, for example `CIO Daily 日报 | 2026-06-10`.
@@ -50,6 +53,12 @@ adgine-daily-feeds/
 Fetch the latest hosted report:
 
 ```bash
+node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs --report
+```
+
+Fetch the default real-time feed:
+
+```bash
 node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs
 ```
 
@@ -64,6 +73,21 @@ Save the hosted report locally:
 ```bash
 node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
   --output=skills/adgine-daily-feeds/data/feed/latest-report.json
+```
+
+Fetch the latest weekly report:
+
+```bash
+node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs --weekly
+```
+
+Fetch a weekly range:
+
+```bash
+node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
+  --weekly \
+  --start-date=2026-06-08 \
+  --end-date=2026-06-12
 ```
 
 Use the returned `report.sections` directly for display, Telegram delivery, or web feed rendering. See `references/api-report-schema.md`.
@@ -109,6 +133,14 @@ node skills/adgine-daily-feeds/scripts/render-daily-report-html.mjs \
   --output=skills/adgine-daily-feeds/data/html/latest-report.html
 ```
 
+Render a weekly report:
+
+```bash
+node skills/adgine-daily-feeds/scripts/render-daily-report-html.mjs \
+  --weekly \
+  --output=skills/adgine-daily-feeds/data/html/latest-weekly.html
+```
+
 ## Version Check
 
 ```bash
@@ -118,7 +150,7 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs
 Compare against a manually supplied latest version:
 
 ```bash
-node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.1
+node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.2
 ```
 
 Version policy: keep normal releases in the current GitHub minor lane and only bump the last number. Do not bump to a new minor or major version unless the user explicitly approves that transition.

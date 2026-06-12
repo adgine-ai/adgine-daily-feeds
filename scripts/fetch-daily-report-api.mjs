@@ -5,6 +5,7 @@ import { dirname } from "node:path";
 
 const DEFAULT_API_BASE = "https://daily.wefnews.com/api/reports/daily";
 const DEFAULT_FEED_API = "https://daily.wefnews.com/api/feed";
+const DEFAULT_WEEKLY_API_BASE = "https://daily.wefnews.com/api/reports/weekly";
 
 function readArg(name) {
   const prefix = `--${name}=`;
@@ -48,6 +49,18 @@ function buildUrl() {
   }
 
   if (!process.argv.includes("--report")) {
+    if (process.argv.includes("--weekly")) {
+      const startDate = readArg("start-date");
+      const endDate = readArg("end-date");
+      if (startDate || endDate) {
+        const url = new URL(DEFAULT_WEEKLY_API_BASE);
+        if (startDate) url.searchParams.set("start_date", startDate);
+        if (endDate) url.searchParams.set("end_date", endDate);
+        return url.toString();
+      }
+      return `${DEFAULT_WEEKLY_API_BASE}/latest`;
+    }
+
     const url = new URL(DEFAULT_FEED_API);
     const window = defaultFeedWindow();
     url.searchParams.set("start_at", readArg("start-at") || process.env.ADGINE_DAILY_FEEDS_START_AT || window.start_at);
@@ -74,6 +87,28 @@ function buildUrl() {
 }
 
 function normalizeResponse(data) {
+  if (data?.ok === true && data.weekly_report) {
+    return {
+      ok: true,
+      source: "hosted_weekly_api",
+      date: data.end_date || data.weekly_report?.range?.end || null,
+      slot: "weekly",
+      weekly_report: data.weekly_report,
+      raw: data,
+    };
+  }
+
+  if (data?.summary?.top_items && data?.range) {
+    return {
+      ok: true,
+      source: "weekly_report_json",
+      date: data.range.end || null,
+      slot: "weekly",
+      weekly_report: data,
+      raw: data,
+    };
+  }
+
   if (data?.ok === true && data.report) {
     return {
       ok: true,
@@ -151,10 +186,12 @@ async function main() {
     slot: normalized.slot || null,
     window: normalized.feed?.window || null,
     title: normalized.report?.title || null,
+    weekly_title: normalized.weekly_report?.title || null,
     sections: normalized.report?.sections?.map((section) => ({
       title: section.title,
       item_count: section.items?.length || 0,
     })) || [],
+    weekly_top_items: normalized.weekly_report?.summary?.top_items?.length ?? null,
     feed_total: normalized.feed?.total ?? null,
     feed_dates: normalized.feed?.dates || null,
     output: output || null,

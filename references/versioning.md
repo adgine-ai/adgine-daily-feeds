@@ -1,6 +1,6 @@
 # Versioning
 
-Current version: `v0.6.1`
+Current version: `v0.6.2`
 
 Use a human-approved version lane:
 

@@ -6,6 +6,7 @@ import { dirname, resolve } from "node:path";
 const SKILL_ROOT = new URL("../", import.meta.url);
 const TEMPLATE_PATH = new URL("templates/daily-report.html", SKILL_ROOT);
 const DEFAULT_API_BASE = "https://daily.wefnews.com/api/reports/daily";
+const DEFAULT_WEEKLY_API_BASE = "https://daily.wefnews.com/api/reports/weekly";
 const SKILL_VERSION = (await readFile(new URL("VERSION", SKILL_ROOT), "utf8")).trim();
 
 function readArg(name) {
@@ -32,6 +33,17 @@ function buildApiUrl() {
   if (explicitUrl) {
     return explicitUrl;
   }
+  if (process.argv.includes("--weekly")) {
+    const startDate = readArg("start-date");
+    const endDate = readArg("end-date");
+    if (startDate || endDate) {
+      const url = new URL(DEFAULT_WEEKLY_API_BASE);
+      if (startDate) url.searchParams.set("start_date", startDate);
+      if (endDate) url.searchParams.set("end_date", endDate);
+      return url.toString();
+    }
+    return `${DEFAULT_WEEKLY_API_BASE}/latest`;
+  }
   const date = readArg("date");
   if (date) {
     const url = new URL(DEFAULT_API_BASE);
@@ -46,10 +58,38 @@ function buildApiUrl() {
 }
 
 function normalizePayload(payload) {
+  if (payload?.weekly_report) {
+    return {
+      ok: payload.ok !== false,
+      date: payload.end_date || payload.weekly_report?.range?.end || null,
+      kind: "weekly",
+      weekly_report: payload.weekly_report,
+      raw: payload,
+    };
+  }
+  if (payload?.raw?.weekly_report) {
+    return {
+      ok: payload.ok !== false,
+      date: payload.end_date || payload.raw.weekly_report?.range?.end || null,
+      kind: "weekly",
+      weekly_report: payload.raw.weekly_report,
+      raw: payload.raw,
+    };
+  }
+  if (payload?.summary?.top_items && payload?.range) {
+    return {
+      ok: true,
+      date: payload.range.end || null,
+      kind: "weekly",
+      weekly_report: payload,
+      raw: payload,
+    };
+  }
   if (payload?.report) {
     return {
       ok: payload.ok !== false,
       date: payload.date || payload.report.date || null,
+      kind: "daily",
       report: payload.report,
       raw: payload,
     };
@@ -58,6 +98,7 @@ function normalizePayload(payload) {
     return {
       ok: payload.ok !== false,
       date: payload.date || payload.raw.date || payload.raw.report.date || null,
+      kind: "daily",
       report: payload.raw.report,
       raw: payload.raw,
     };
@@ -66,6 +107,7 @@ function normalizePayload(payload) {
     return {
       ok: true,
       date: payload.date || null,
+      kind: "daily",
       report: payload,
       raw: payload,
     };
@@ -225,6 +267,82 @@ function countSources(report) {
   return new Set(allReportItems(report).map((item) => sourcePlatform(item))).size;
 }
 
+function gradeIcon(grade) {
+  return {
+    must_read: "🔥",
+    useful: "🔵",
+    watch: "🟣",
+  }[grade] || "•";
+}
+
+function weeklyTotals(weeklyReport) {
+  return weeklyReport.summary?.totals || {};
+}
+
+function renderWeeklyConclusion(weeklyReport) {
+  const bullets = Array.isArray(weeklyReport.conclusion)
+    ? weeklyReport.conclusion
+    : [];
+  if (!bullets.length) {
+    return "";
+  }
+  return `<section class="conclusion"><div class="tag">本周结论</div><div class="summary">${escapeHtml(bullets[0])}</div><ul>${bullets.slice(1).map((bullet) => `<li>${escapeHtml(bullet)}</li>`).join("")}</ul></section>`;
+}
+
+function renderWeeklyTopics(weeklyReport) {
+  const topics = weeklyReport.summary?.topics || [];
+  if (!topics.length) {
+    return "";
+  }
+  const items = topics.slice(0, 8).map((topic) => {
+    return `<article class="card">
+      <div class="title-row">
+        <div class="index">${escapeHtml(topic.count ?? "-")}</div>
+        <div class="title-block">
+          <div class="source-row"><span class="platform-badge">主题趋势</span></div>
+          <div class="title">${escapeHtml(topic.topic || "未命名主题")}</div>
+        </div>
+      </div>
+    </article>`;
+  }).join("");
+  return `<div class="section-title">主题趋势</div>${items}`;
+}
+
+function renderWeeklyItems(weeklyReport) {
+  const items = weeklyReport.summary?.top_items || [];
+  if (!items.length) {
+    return "";
+  }
+  const cards = items.slice(0, 10).map((item, itemIndex) => {
+    const platform = sourcePlatform(item);
+    const href = item.url || item.href_url || "#";
+    const grade = item.quality?.grade || "n/a";
+    const score = item.quality?.score ?? "-";
+    const recommendation = item.recommendation || item.ai_recommendation
+      ? `<div class="recommend">推荐：${escapeHtml(item.recommendation || item.ai_recommendation)}</div>`
+      : "";
+    return `<article class="card source-${escapeAttr(platform)}">
+      <div class="title-row">
+        <div class="index">${itemIndex + 1}</div>
+        <div class="title-block">
+          <div class="source-row">
+            <span class="platform-badge platform-${escapeAttr(platform)}">${escapeHtml(platformLabel(platform))}</span>
+            <span>${escapeHtml(item.source || sourceLabel(item))}</span>
+            <span>${escapeHtml(item.published_at || "n/a")}</span>
+          </div>
+          <a class="title" href="${escapeAttr(href)}" target="_blank" rel="noreferrer">${escapeHtml(item.title)}</a>
+        </div>
+      </div>
+      <div class="detail">
+        <span>${escapeHtml(item.section || "本周优先阅读")}</span>
+        <span class="quality">${escapeHtml(`${gradeIcon(grade)} ${grade} / ${score}`)}</span>
+      </div>
+      ${recommendation}
+    </article>`;
+  }).join("");
+  return `<div class="section-title">本周优先阅读</div>${cards}`;
+}
+
 function shortDate(value) {
   const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
   return match ? `${match[1]}-${match[2]}-${match[3]}` : String(value || "latest");
@@ -260,17 +378,53 @@ function renderHtml(template, report) {
     .replaceAll("{{footer}}", escapeHtml(footer));
 }
 
+function renderWeeklyHtml(template, weeklyReport) {
+  const totals = weeklyTotals(weeklyReport);
+  const bySource = weeklyReport.summary?.by_source || {};
+  const byQuality = weeklyReport.summary?.by_quality || {};
+  const range = weeklyReport.range || {};
+  const sourceSummary = [
+    `公众号 ${bySource.weixin_mp || 0}`,
+    `X ${bySource.x || 0}`,
+    `Medium ${bySource.medium || 0}`,
+  ].join(" / ");
+  const qualitySummary = [
+    `must_read ${byQuality.must_read || 0}`,
+    `useful ${byQuality.useful || 0}`,
+    `watch ${byQuality.watch || 0}`,
+  ].join(" / ");
+  const content = `${renderWeeklyConclusion(weeklyReport)}${renderWeeklyTopics(weeklyReport)}${renderWeeklyItems(weeklyReport)}`;
+  const footer = `@Adgine.ai beta · CIO Daily 周报 · API ${SKILL_VERSION}`;
+  return template
+    .replaceAll("{{title}}", escapeHtml(weeklyReport.title || "CIO Daily 周报"))
+    .replaceAll("{{theme}}", escapeHtml(normalizeTheme(readArg("theme"))))
+    .replaceAll("{{date}}", escapeHtml(`${range.start || "latest"} - ${range.end || "latest"}`))
+    .replaceAll("{{displayScope}}", escapeHtml(`来源：${sourceSummary}`))
+    .replaceAll("{{windowText}}", escapeHtml(`质量：${qualitySummary}`))
+    .replaceAll("{{badge}}", escapeHtml(`API ${SKILL_VERSION} · daily.wefnews.com · weekly`))
+    .replaceAll("{{sampledCount}}", escapeHtml(totals.raw_weixin_unique_items ?? "-"))
+    .replaceAll("{{windowCount}}", escapeHtml(totals.days_with_daily_report ?? "-"))
+    .replaceAll("{{selectedCount}}", escapeHtml(totals.selected_unique_items ?? weeklyReport.summary?.top_items?.length ?? "-"))
+    .replaceAll("{{mustReadCount}}", escapeHtml(byQuality.must_read || 0))
+    .replaceAll("{{sourceCount}}", escapeHtml(Object.values(bySource).filter((count) => Number(count) > 0).length || "-"))
+    .replaceAll("{{content}}", content)
+    .replaceAll("{{footer}}", escapeHtml(footer));
+}
+
 async function main() {
   const loaded = await loadReport();
   const template = await readFile(TEMPLATE_PATH, "utf8");
-  const html = renderHtml(template, loaded.report);
-  const output = readArg("output") || resolve(`data/html/daily-report-${loaded.date || "latest"}.html`);
+  const html = loaded.weekly_report
+    ? renderWeeklyHtml(template, loaded.weekly_report)
+    : renderHtml(template, loaded.report);
+  const output = readArg("output") || resolve(`data/html/${loaded.weekly_report ? "weekly" : "daily"}-report-${loaded.date || "latest"}.html`);
   await mkdir(dirname(output), { recursive: true });
   await writeFile(output, html);
   console.log(JSON.stringify({
     ok: true,
     date: loaded.date || null,
-    title: loaded.report.title || null,
+    kind: loaded.kind || (loaded.weekly_report ? "weekly" : "daily"),
+    title: loaded.report?.title || loaded.weekly_report?.title || null,
     output,
     api_url: loaded.api_url || null,
   }, null, 2));

@@ -1,6 +1,6 @@
 interface:
   display_name: "Adgine Daily Feeds"
-  short_description: "Fetch and render Chinese GEO/AEO daily reports"
-  default_prompt: "Use $adgine-daily-feeds to fetch the latest hosted GEO/AEO feed by default, or a fixed daily report when requested, including X and Medium sections when the API provides them."
+  short_description: "Fetch and render Chinese GEO/AEO feed, daily, and weekly reports"
+  default_prompt: "Use $adgine-daily-feeds to fetch the latest hosted GEO/AEO feed by default, a fixed daily report when requested, or a weekly report when the user asks for weekly review. Preserve API-provided WeChat, X, and Medium sections."
 policy:
   allow_implicit_invocation: true

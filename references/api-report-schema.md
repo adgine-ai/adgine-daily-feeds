@@ -1,8 +1,8 @@
 # Daily Report API Schema
 
-Version: `v0.6.1`
+Version: `v0.6.2`
 
-The API layer returns generated daily report results only. Crawling, browser-based WeChat URL resolution, scoring, deduplication, and scheduling happen on the server side before this API is consumed.
+The API layer returns generated feed, daily report, and weekly report results. Crawling, browser-based WeChat URL resolution, scoring, deduplication, and scheduling happen on the server side before this API is consumed.
 
 ## Principle
 
@@ -10,6 +10,7 @@ Keep the skill simple:
 
 - Fetch the hosted feed JSON by default.
 - Fetch a generated daily report JSON only when the user asks for a fixed report snapshot or a specific date.
+- Fetch a generated weekly report JSON only when the user asks for weekly review.
 - Display, summarize, or deliver the API result to a configured channel.
 - Do not make every agent crawl Sogou Weixin or resolve WeChat links.
 - If the API is unavailable, report the missing state. This skill no longer includes local crawling fallback.
@@ -22,6 +23,8 @@ Default hosted endpoint:
 GET https://daily.wefnews.com/api/reports/daily/latest
 GET https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD&slot=10am|18pm|22pm|latest
 GET https://daily.wefnews.com/api/feed
+GET https://daily.wefnews.com/api/reports/weekly/latest
+GET https://daily.wefnews.com/api/reports/weekly?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
 ```
 
 The current hosted response is:
@@ -57,6 +60,8 @@ Default parameters:
 - `format`: optional, default `json`.
 
 ## Response
+
+### Daily Report
 
 ```json
 {
@@ -213,6 +218,97 @@ Supported `source.platform` values for HTML rendering:
 - `x` / `twitter`
 - `medium`
 - other strings fall back to a neutral source badge.
+
+## Weekly Report Endpoint
+
+Use the weekly endpoint when the user asks for a weekly review, weekly summary, or weekly HTML. Weekly reports summarize already generated feed and daily data. The skill should not crawl new data for this step.
+
+```http
+GET https://daily.wefnews.com/api/reports/weekly/latest
+GET https://daily.wefnews.com/api/reports/weekly?start_date=2026-06-08&end_date=2026-06-12
+```
+
+Typical hosted wrapper:
+
+```json
+{
+  "ok": true,
+  "start_date": "2026-06-08",
+  "end_date": "2026-06-12",
+  "weekly_report": {}
+}
+```
+
+The `weekly_report` object can also be saved directly:
+
+```json
+{
+  "title": "CIO Daily 周报 | 2026-06-08 - 2026-06-12",
+  "generated_at": "2026-06-12T10:30:00+08:00",
+  "range": {
+    "start": "2026-06-08",
+    "end": "2026-06-12",
+    "timezone": "Asia/Shanghai",
+    "requested_days": 5
+  },
+  "summary": {
+    "available_dates": ["2026-06-08", "2026-06-09"],
+    "missing_dates": [],
+    "totals": {
+      "selected_unique_items": 48,
+      "raw_weixin_unique_items": 1141,
+      "days_with_daily_report": 5,
+      "days_with_raw_weixin": 5
+    },
+    "by_source": {
+      "weixin_mp": 33,
+      "x": 8,
+      "medium": 7
+    },
+    "by_quality": {
+      "must_read": 13,
+      "useful": 30,
+      "watch": 5
+    },
+    "by_day": {},
+    "high_quality_by_day": {},
+    "topics": [
+      {
+        "topic": "AI Search / SEO 关系",
+        "count": 19
+      }
+    ],
+    "top_items": [
+      {
+        "title": "Article title",
+        "source": "X·@account",
+        "platform": "x",
+        "published_at": "2026-06-10 11:34",
+        "quality": {
+          "grade": "must_read",
+          "score": 85
+        },
+        "url": "https://x.com/...",
+        "recommendation": "一句 AI 推荐理由。",
+        "section": "X 观察"
+      }
+    ]
+  },
+  "conclusion": [
+    "本周可读内容共 48 条，其中 must_read 13 条、useful 30 条。",
+    "主题重心集中在 AI Search / SEO 关系。",
+    "微信公众号贡献 33 条，X/Medium 贡献 15 条。"
+  ]
+}
+```
+
+Weekly rendering rules:
+
+- `title` is the visible report title.
+- `range.start` and `range.end` are the report date range in `Asia/Shanghai`.
+- `summary.top_items` is the priority reading list. Keep links on titles.
+- `summary.topics` is the topic trend block.
+- `conclusion` should be shown as a short weekly conclusion, not expanded into a long operations memo.
 
 ## Feed Stream Endpoint
 

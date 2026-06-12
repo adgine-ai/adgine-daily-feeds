@@ -1,14 +1,14 @@
 ---
 name: adgine-daily-feeds
-description: Use this skill to fetch, display, summarize, render HTML, or deliver Adgine/CIO Daily Chinese GEO/AEO daily report results from the hosted daily.wefnews.com API, with optional Telegram delivery using user-provided configuration.
-version: v0.6.1
+description: Use this skill to fetch, display, summarize, render HTML, or deliver Adgine/CIO Daily Chinese GEO/AEO feed, daily report, and weekly report results from the hosted daily.wefnews.com API, with optional Telegram delivery using user-provided configuration.
+version: v0.6.2
 ---
 
 # Adgine Daily Feeds
 
-Version: `v0.6.1`
+Version: `v0.6.2`
 
-Use this skill when the task is to fetch, display, summarize, render HTML, or deliver an Adgine/CIO Daily style daily report for `GEO / AEO`.
+Use this skill when the task is to fetch, display, summarize, render HTML, or deliver an Adgine/CIO Daily style feed, daily report, or weekly report for `GEO / AEO`.
 
 This skill is API-only. It consumes server-generated feed and daily report results and does not crawl Sogou Weixin locally.
 
@@ -16,7 +16,7 @@ This skill is API-only. It consumes server-generated feed and daily report resul
 
 Current supported sources:
 
-- Server-generated WeChat/Sogou daily report from `daily.wefnews.com`.
+- Server-generated WeChat/Sogou feed, daily report, and weekly report from `daily.wefnews.com`.
 - API-provided supplemental `X 观察` and `Medium 观察` sections when present in `report.sections`.
 
 Default API endpoints:
@@ -24,11 +24,14 @@ Default API endpoints:
 - Feed stream: `https://daily.wefnews.com/api/feed`
 - Latest report: `https://daily.wefnews.com/api/reports/daily/latest`
 - Date report: `https://daily.wefnews.com/api/reports/daily?date=YYYY-MM-DD&slot=10am|18pm|22pm|latest`
+- Latest weekly report: `https://daily.wefnews.com/api/reports/weekly/latest`
+- Weekly range report: `https://daily.wefnews.com/api/reports/weekly?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
 
 Default behavior:
 
 - Use the feed endpoint by default because it is the real-time/incremental view.
 - Use the daily report endpoint only when the user asks for a fixed daily report, report snapshot, or specific date/slot report.
+- Use the weekly report endpoint only when the user asks for a weekly review, weekly summary, or weekly HTML.
 
 Report slot semantics:
 
@@ -37,7 +40,7 @@ Report slot semantics:
 - `latest` means the newest generated report available on the hosted API; when an `18pm` report exists for a date it may be newer than that date's `10am` report.
 - `report.window.slot` and top-level `slot`, when present, identify the report window. Do not infer slot from wall-clock time.
 
-Not in v0.6.1:
+Not in v0.6.2:
 
 - Local X/Twitter, Medium, Reddit, Xiaohongshu, Douyin, GitHub, or competitor crawling.
 - Local Sogou Weixin crawling or browser-based WeChat URL resolution.
@@ -60,6 +63,7 @@ Not in v0.6.1:
    - User version: concise, readable, only high-quality or scannable items.
    - For a temporary HTML page, run `scripts/render-daily-report-html.mjs`.
    - HTML output defaults to light theme and includes a Light/Dark switch.
+   - The HTML renderer supports both daily report JSON and weekly report JSON.
    - HTML cards parse `source.platform`, `source_platform`, `summary`, `tags`, and `metrics` for WeChat, X, Medium, and future sources.
    - When `display_scope` is `来源：微信公众号 / X / Medium`, preserve the multi-source structure instead of flattening all items into one generic list.
    - For feed stream output, preserve item-level `href`, `slot`, `captured_display`, `published_display`, and `section_title`.
@@ -112,9 +116,42 @@ Rules:
 
 - Write in Chinese by default.
 - The user version should not expose query terms, raw scoring internals, or long URLs.
+- Do not show the visible count summary line such as `今日精选 3 条 ｜ 延伸阅读 3 条 ｜ X 观察 2 条 ｜ Medium 观察 2 条`.
+- Keep `今日结论` short and dynamic. Avoid repeating the same `阅读顺序` / `行动建议` boilerplate every day.
 - Each item needs a one-sentence recommendation reason.
+- Item titles should carry links. Avoid raw long URLs in the visible body.
+- The visible item index line should keep `指数` compact. In Feishu card output, use icons to make the unified grade stand out: `🔥 must_read / 83`, `🔵 useful / 73`, `🟣 watch / 75`.
 - If a source is blocked, unresolved, or only partially visible, say so explicitly.
 - Do not assume X / Medium are always present for every date. Missing sections can mean the hosted report did not include supplement data for that window.
+
+For the user-facing Chinese weekly report:
+
+```text
+CIO Daily 周报 | YYYY-MM-DD - YYYY-MM-DD
+
+本周结论
+- ...
+
+一周数据概览
+- 精选内容、原始公众号样本、来源分布、质量分布。
+
+主题趋势
+- 主题名 / 数量 / 变化解释。
+
+本周优先阅读
+1. <linked title>
+- 来源：平台·账号 ｜ YYYY-MM-DD HH:mm
+- 指数：🔥 must_read / 85
+- 推荐：一句 AI 推荐理由
+
+- @Adgine.ai beta
+```
+
+Weekly report rules:
+
+- Weekly reports summarize already generated feed/daily data. Do not trigger new crawling from the skill.
+- Prefer the hosted weekly API or a saved weekly JSON file.
+- If the user asks for PDF, render HTML first and treat PDF export as a downstream conversion step.
 
 ## Bundled Scripts
 
@@ -129,18 +166,20 @@ The skill includes a minimal runnable script set under `scripts/`.
 - `scripts/fetch-daily-report-api.mjs`
   - Fetches the server-generated feed or daily report JSON from `daily.wefnews.com`.
   - Defaults to `https://daily.wefnews.com/api/feed`.
-  - Supports `--report`, `--date=YYYY-MM-DD`, `--slot=10am|18pm|22pm`, `--start-at="YYYY-MM-DD HH:mm"`, `--end-at="YYYY-MM-DD HH:mm"`, `--source=all|weixin_mp|x|medium`, `--limit=N`, `--api-url=<url>`, and `--output=<path>`.
+  - Supports `--report`, `--weekly`, `--date=YYYY-MM-DD`, `--slot=10am|18pm|22pm`, `--start-date=YYYY-MM-DD`, `--end-date=YYYY-MM-DD`, `--start-at="YYYY-MM-DD HH:mm"`, `--end-at="YYYY-MM-DD HH:mm"`, `--source=all|weixin_mp|x|medium`, `--limit=N`, `--api-url=<url>`, and `--output=<path>`.
   - Use the default feed mode whenever the user wants current feed data.
   - Use `--report` when the user wants a fixed daily report snapshot.
+  - Use `--weekly` when the user wants a weekly report snapshot.
   - Remember that `latest` means the latest generated window-end report available on the hosted API, not necessarily the current wall-clock day if deployment or data publication is lagging.
   - Feed mode defaults to the natural rolling window from previous-day `10:00` Asia/Shanghai to current wall-clock time. For example, at `2026-06-11 09:42`, the request window is `2026-06-10 10:00` to `2026-06-11 09:42`.
 
 - `scripts/render-daily-report-html.mjs`
   - Fetches the hosted API or reads a saved API JSON, then renders a standalone HTML page.
   - Defaults to the same hosted latest-report API.
-  - Supports `--date=YYYY-MM-DD`, `--slot=10am|18pm`, `--api-url=<url>`, `--input=<path>`, `--output=<path>`, and `--theme=light|dark`.
+  - Supports `--weekly`, `--date=YYYY-MM-DD`, `--slot=10am|18pm`, `--start-date=YYYY-MM-DD`, `--end-date=YYYY-MM-DD`, `--api-url=<url>`, `--input=<path>`, `--output=<path>`, and `--theme=light|dark`.
   - Default theme is `light`; the generated page also includes an in-page Light/Dark switch.
   - Renders platform badges and optional summaries/tags/metrics for `weixin`, `x`, and `medium` items.
+  - Renders weekly report JSON with `本周结论`, `主题趋势`, and `本周优先阅读`.
   - Uses `templates/daily-report.html`.
   - Use this when WorkBuddy or another agent needs a temporary readable HTML page without building a web app.
 
@@ -156,7 +195,7 @@ Default output when saving API results:
 
 ## Delivery Configuration
 
-`v0.6.1` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
+`v0.6.2` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
 
 - Example config: `config/destinations.example.json`
 - Local config: `config/destinations.local.json` or `config/destinations.json`
