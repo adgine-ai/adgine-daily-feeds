@@ -1,12 +1,12 @@
 ---
 name: adgine-daily-feeds
 description: Use this skill to fetch, display, summarize, render HTML, or deliver Adgine/CIO Daily Chinese GEO/AEO feed, daily report, and weekly report results from the hosted daily.wefnews.com API, with optional Telegram delivery using user-provided configuration.
-version: v0.6.2
+version: v0.6.3
 ---
 
 # Adgine Daily Feeds
 
-Version: `v0.6.2`
+Version: `v0.6.3`
 
 Use this skill when the task is to fetch, display, summarize, render HTML, or deliver an Adgine/CIO Daily style feed, daily report, or weekly report for `GEO / AEO`.
 
@@ -40,7 +40,7 @@ Report slot semantics:
 - `latest` means the newest generated report available on the hosted API; when an `18pm` report exists for a date it may be newer than that date's `10am` report.
 - `report.window.slot` and top-level `slot`, when present, identify the report window. Do not infer slot from wall-clock time.
 
-Not in v0.6.2:
+Not in v0.6.3:
 
 - Local X/Twitter, Medium, Reddit, Xiaohongshu, Douyin, GitHub, or competitor crawling.
 - Local Sogou Weixin crawling or browser-based WeChat URL resolution.
@@ -62,8 +62,9 @@ Not in v0.6.2:
 2. Produce simple report outputs.
    - User version: concise, readable, only high-quality or scannable items.
    - For a temporary HTML page, run `scripts/render-daily-report-html.mjs`.
-   - HTML output defaults to light theme and includes a Light/Dark switch.
+   - HTML output defaults to light theme and includes a single icon theme toggle.
    - The HTML renderer supports both daily report JSON and weekly report JSON.
+   - The daily HTML template uses a compact daily.wefnews-style layout with source/time metadata on one line, tag-forward summaries, and score badges pinned to the card corner.
    - HTML cards parse `source.platform`, `source_platform`, `summary`, `tags`, and `metrics` for WeChat, X, Medium, and future sources.
    - When `display_scope` is `来源：微信公众号 / X / Medium`, preserve the multi-source structure instead of flattening all items into one generic list.
    - For feed stream output, preserve item-level `href`, `slot`, `captured_display`, `published_display`, and `section_title`.
@@ -195,7 +196,7 @@ Default output when saving API results:
 
 ## Delivery Configuration
 
-`v0.6.2` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
+`v0.6.3` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
 
 - Example config: `config/destinations.example.json`
 - Local config: `config/destinations.local.json` or `config/destinations.json`

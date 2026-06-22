@@ -1,6 +1,6 @@
 # Adgine Daily Feeds
 
-Version: `v0.6.2`
+Version: `v0.6.3`
 
 `adgine-daily-feeds` is a Codex skill for consuming and delivering Chinese GEO/AEO feed, daily report, and weekly report results. It is API-only: the server generates the JSON, and the skill fetches, renders, or delivers that result.
 
@@ -150,7 +150,7 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs
 Compare against a manually supplied latest version:
 
 ```bash
-node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.2
+node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.3
 ```
 
 Version policy: keep normal releases in the current GitHub minor lane and only bump the last number. Do not bump to a new minor or major version unless the user explicitly approves that transition.

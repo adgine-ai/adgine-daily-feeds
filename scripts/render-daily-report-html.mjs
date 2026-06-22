@@ -204,16 +204,15 @@ function renderConclusion(report) {
 function renderItems(report) {
   let index = 1;
   return getDisplaySections(report).map((section) => {
-    const items = (section.items || []).map((item) => {
+    const sectionItems = section.items || [];
+    const items = sectionItems.map((item) => {
       const current = index;
       index += 1;
       const meta = splitPublishedLabel(item.published_label);
       const platform = sourcePlatform(item);
-      const recommendation = item.ai_recommendation
-        ? `<div class="recommend">推荐：${escapeHtml(item.ai_recommendation)}</div>`
-        : "";
-      const summary = item.summary || item.key_info
-        ? `<div class="summary-text">${escapeHtml(item.summary || item.key_info)}</div>`
+      const summaryValue = item.summary || item.key_info || item.ai_recommendation || "";
+      const summary = summaryValue
+        ? `<div class="summary-text">${escapeHtml(summaryValue)}</div>`
         : "";
       const tags = Array.isArray(item.tags) && item.tags.length
         ? `<div class="tags">${item.tags.slice(0, 6).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>`
@@ -227,27 +226,25 @@ function renderItems(report) {
         : "";
       const metricsHtml = metrics ? `<div class="metrics">${metrics}</div>` : "";
       return `<article class="card source-${escapeAttr(platform)}">
+        <span class="quality">${escapeHtml(meta.quality)}</span>
         <div class="title-row">
-          <div class="index">${current}</div>
           <div class="title-block">
             <div class="source-row">
+              <span class="index">${current}</span>
               <span class="platform-badge platform-${escapeAttr(platform)}">${escapeHtml(platformLabel(platform))}</span>
-              <span>${escapeHtml(sourceLabel(item))}</span>
+              <span class="source-label">${escapeHtml(sourceLabel(item))}</span>
+              <span class="meta-sep">|</span>
+              <span class="source-time">${escapeHtml(meta.publishedAt)}</span>
             </div>
             <a class="title" href="${escapeAttr(itemHref(item))}" target="_blank" rel="noreferrer">${escapeHtml(item.title)}</a>
           </div>
         </div>
-        <div class="detail">
-          <span>${escapeHtml(meta.publishedAt)}</span>
-          <span class="quality">${escapeHtml(meta.quality)}</span>
-        </div>
         ${summary}
         ${tags}
         ${metricsHtml}
-        ${recommendation}
       </article>`;
     }).join("");
-    return `<div class="section-title">${escapeHtml(section.title)}</div>${items}`;
+    return `<div class="section-heading"><div class="section-title">${escapeHtml(section.title)}</div><div class="section-count">${escapeHtml(sectionItems.length)} 条</div></div>${items}`;
   }).join("");
 }
 
@@ -305,7 +302,7 @@ function renderWeeklyTopics(weeklyReport) {
       </div>
     </article>`;
   }).join("");
-  return `<div class="section-title">主题趋势</div>${items}`;
+  return `<div class="section-heading"><div class="section-title">主题趋势</div><div class="section-count">${escapeHtml(topics.slice(0, 8).length)} 个主题</div></div>${items}`;
 }
 
 function renderWeeklyItems(weeklyReport) {
@@ -340,7 +337,7 @@ function renderWeeklyItems(weeklyReport) {
       ${recommendation}
     </article>`;
   }).join("");
-  return `<div class="section-title">本周优先阅读</div>${cards}`;
+  return `<div class="section-heading"><div class="section-title">本周优先阅读</div><div class="section-count">${escapeHtml(items.slice(0, 10).length)} 条</div></div>${cards}`;
 }
 
 function shortDate(value) {
@@ -368,7 +365,7 @@ function renderHtml(template, report) {
     .replaceAll("{{date}}", escapeHtml(shortDate(report.display_captured_at || report.captured_at)))
     .replaceAll("{{displayScope}}", escapeHtml(report.display_scope || "来源：微信公众号"))
     .replaceAll("{{windowText}}", escapeHtml(formatWindow(report)))
-    .replaceAll("{{badge}}", escapeHtml(`API ${SKILL_VERSION} · daily.wefnews.com`))
+    .replaceAll("{{badge}}", escapeHtml("GEO / AEO Intelligence"))
     .replaceAll("{{sampledCount}}", escapeHtml(report.totals?.sampled_count ?? "-"))
     .replaceAll("{{windowCount}}", escapeHtml(report.totals?.window_count ?? "-"))
     .replaceAll("{{selectedCount}}", escapeHtml(report.totals?.selected_count ?? "-"))
@@ -401,7 +398,7 @@ function renderWeeklyHtml(template, weeklyReport) {
     .replaceAll("{{date}}", escapeHtml(`${range.start || "latest"} - ${range.end || "latest"}`))
     .replaceAll("{{displayScope}}", escapeHtml(`来源：${sourceSummary}`))
     .replaceAll("{{windowText}}", escapeHtml(`质量：${qualitySummary}`))
-    .replaceAll("{{badge}}", escapeHtml(`API ${SKILL_VERSION} · daily.wefnews.com · weekly`))
+    .replaceAll("{{badge}}", escapeHtml("GEO / AEO Intelligence · Weekly"))
     .replaceAll("{{sampledCount}}", escapeHtml(totals.raw_weixin_unique_items ?? "-"))
     .replaceAll("{{windowCount}}", escapeHtml(totals.days_with_daily_report ?? "-"))
     .replaceAll("{{selectedCount}}", escapeHtml(totals.selected_unique_items ?? weeklyReport.summary?.top_items?.length ?? "-"))
