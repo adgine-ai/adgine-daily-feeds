@@ -1,12 +1,12 @@
 ---
 name: adgine-daily-feeds
 description: Use this skill to fetch, display, summarize, render HTML, or deliver Adgine/CIO Daily Chinese GEO/AEO feed, daily report, and weekly report results from the hosted daily.wefnews.com API, with optional Telegram delivery using user-provided configuration.
-version: v0.6.3
+version: v0.6.4
 ---
 
 # Adgine Daily Feeds
 
-Version: `v0.6.3`
+Version: `v0.6.4`
 
 Use this skill when the task is to fetch, display, summarize, render HTML, or deliver an Adgine/CIO Daily style feed, daily report, or weekly report for `GEO / AEO`.
 
@@ -40,7 +40,7 @@ Report slot semantics:
 - `latest` means the newest generated report available on the hosted API; when an `18pm` report exists for a date it may be newer than that date's `10am` report.
 - `report.window.slot` and top-level `slot`, when present, identify the report window. Do not infer slot from wall-clock time.
 
-Not in v0.6.3:
+Not in v0.6.4:
 
 - Local X/Twitter, Medium, Reddit, Xiaohongshu, Douyin, GitHub, or competitor crawling.
 - Local Sogou Weixin crawling or browser-based WeChat URL resolution.
@@ -125,6 +125,27 @@ Rules:
 - If a source is blocked, unresolved, or only partially visible, say so explicitly.
 - Do not assume X / Medium are always present for every date. Missing sections can mean the hosted report did not include supplement data for that window.
 
+## Follow-up Shortcuts
+
+After answering a feed, daily report, weekly report, or skill-version request, append a short `快捷入口` block unless the user explicitly asks for no follow-up suggestions.
+
+Keep the shortcuts concise and action-oriented. Prefer 2-4 items, using Chinese labels that the user can send directly as the next request:
+
+```text
+快捷入口：
+- 查看今日 GEO 日报
+- 查看最新 GEO 信息流
+- 查看往常日报
+- 生成本周 GEO 周报
+```
+
+Rules:
+
+- Match shortcuts to the current context. For a daily report, include "查看今日 GEO 日报" and "查看往常日报"; for a feed response, include "查看最新 GEO 信息流"; for a weekly response, include "生成本周 GEO 周报".
+- Do not include raw API URLs in the shortcut labels.
+- Do not over-explain the shortcuts. They are next-action prompts, not documentation.
+- If the answer already ends with an explicit next step requested by the user, keep the shortcut block after that step.
+
 For the user-facing Chinese weekly report:
 
 ```text
@@ -196,7 +217,7 @@ Default output when saving API results:
 
 ## Delivery Configuration
 
-`v0.6.3` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
+`v0.6.4` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
 
 - Example config: `config/destinations.example.json`
 - Local config: `config/destinations.local.json` or `config/destinations.json`

@@ -1,6 +1,6 @@
 # Daily Report API Schema
 
-Version: `v0.6.3`
+Version: `v0.6.4`
 
 The API layer returns generated feed, daily report, and weekly report results. Crawling, browser-based WeChat URL resolution, scoring, deduplication, and scheduling happen on the server side before this API is consumed.
 
