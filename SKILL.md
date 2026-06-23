@@ -1,12 +1,12 @@
 ---
 name: adgine-daily-feeds
 description: Use this skill to fetch, display, summarize, render HTML, or deliver Adgine/CIO Daily Chinese GEO/AEO feed, daily report, and weekly report results from the hosted daily.wefnews.com API, with optional Telegram delivery using user-provided configuration.
-version: v0.6.4
+version: v0.6.5
 ---
 
 # Adgine Daily Feeds
 
-Version: `v0.6.4`
+Version: `v0.6.5`
 
 Use this skill when the task is to fetch, display, summarize, render HTML, or deliver an Adgine/CIO Daily style feed, daily report, or weekly report for `GEO / AEO`.
 
@@ -40,7 +40,14 @@ Report slot semantics:
 - `latest` means the newest generated report available on the hosted API; when an `18pm` report exists for a date it may be newer than that date's `10am` report.
 - `report.window.slot` and top-level `slot`, when present, identify the report window. Do not infer slot from wall-clock time.
 
-Not in v0.6.4:
+Date and window UX:
+
+- When answering a daily report request, state the actual report date and slot/window when the API exposes them.
+- If the user asks for "今天" or "今日", compare the API report date with the current Asia/Shanghai date. If `latest` is older than today, say that the latest available report is older and name the exact date.
+- When a user asks for historical reports without a date, ask for a date in `YYYY-MM-DD` format or offer to fetch the latest report first.
+- For feed responses, describe the feed window in user language such as "上一日 10:00 到当前时间" when available.
+
+Not in v0.6.5:
 
 - Local X/Twitter, Medium, Reddit, Xiaohongshu, Douyin, GitHub, or competitor crawling.
 - Local Sogou Weixin crawling or browser-based WeChat URL resolution.
@@ -69,6 +76,8 @@ Not in v0.6.4:
    - When `display_scope` is `来源：微信公众号 / X / Medium`, preserve the multi-source structure instead of flattening all items into one generic list.
    - For feed stream output, preserve item-level `href`, `slot`, `captured_display`, `published_display`, and `section_title`.
    - Operations detail should stay in API `meta` and `warnings` unless the user asks for it.
+   - When saving JSON or rendering HTML, include the output path, source API or input file, report date, and slot/window in the final answer.
+   - Treat standalone HTML preview as a first-class output option. If the user asks to "看效果", "预览", "生成页面", or "HTML", render a temporary HTML file and return its path.
 
 3. Preserve source links from the API.
    - In Feishu or web feed, put the link on the item title.
@@ -125,6 +134,25 @@ Rules:
 - If a source is blocked, unresolved, or only partially visible, say so explicitly.
 - Do not assume X / Medium are always present for every date. Missing sections can mean the hosted report did not include supplement data for that window.
 
+Error and empty-state rules:
+
+- If an API request fails, answer with `数据状态`, `可能原因`, and `下一步建议`.
+- If the API returns no items for a requested date or slot, do not fabricate a report. Say which date/slot was requested and suggest trying `latest` or another date.
+- If supplemental sections such as X or Medium are missing, frame it as current API data absence unless the API explicitly reports a failure.
+- If a generated file path points to a temporary directory, say it is a temporary preview artifact.
+
+Output metadata:
+
+- After generating or saving artifacts, include a compact metadata block when useful:
+
+```text
+产物：
+- JSON：<path or 未保存>
+- HTML：<path or 未生成>
+- 来源：<API URL or input file>
+- 报告：YYYY-MM-DD / slot
+```
+
 ## Follow-up Shortcuts
 
 After answering a feed, daily report, weekly report, or skill-version request, append a short `快捷入口` block unless the user explicitly asks for no follow-up suggestions.
@@ -136,12 +164,15 @@ Keep the shortcuts concise and action-oriented. Prefer 2-4 items, using Chinese 
 - 查看今日 GEO 日报
 - 查看最新 GEO 信息流
 - 查看往常日报
+- 生成 HTML 预览
 - 生成本周 GEO 周报
 ```
 
 Rules:
 
 - Match shortcuts to the current context. For a daily report, include "查看今日 GEO 日报" and "查看往常日报"; for a feed response, include "查看最新 GEO 信息流"; for a weekly response, include "生成本周 GEO 周报".
+- Include "生成 HTML 预览" when the response produced a text report but not an HTML file.
+- If the user asks "查看往常日报" without a date, ask for a date or offer the format `查看 2026-06-22 GEO 日报`.
 - Do not include raw API URLs in the shortcut labels.
 - Do not over-explain the shortcuts. They are next-action prompts, not documentation.
 - If the answer already ends with an explicit next step requested by the user, keep the shortcut block after that step.
@@ -184,6 +215,7 @@ The skill includes a minimal runnable script set under `scripts/`.
   - Run this when the user asks about skill version, version check, whether the skill is outdated, or whether it needs an update.
   - Supports `--latest=vX.Y.Z` or `ADGINE_DAILY_FEEDS_LATEST_VERSION=vX.Y.Z` for manual comparison.
   - If the local version is older than the supplied latest version, tell the user to manually update the skill before production use.
+  - For production validation, prefer cloning or downloading the GitHub repository into a temporary directory and running the check there. Do not update WorkBuddy's local skill cache unless the user explicitly asks.
 
 - `scripts/fetch-daily-report-api.mjs`
   - Fetches the server-generated feed or daily report JSON from `daily.wefnews.com`.
@@ -217,7 +249,7 @@ Default output when saving API results:
 
 ## Delivery Configuration
 
-`v0.6.4` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
+`v0.6.5` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
 
 - Example config: `config/destinations.example.json`
 - Local config: `config/destinations.local.json` or `config/destinations.json`

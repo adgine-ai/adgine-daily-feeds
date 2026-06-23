@@ -1,6 +1,6 @@
 # Adgine Daily Feeds
 
-版本：`v0.6.4`
+版本：`v0.6.5`
 
 `adgine-daily-feeds` 是一个用于消费和分发中文 GEO/AEO feed、日报、周报结果的 Codex Skill。当前是 API-only：服务端生成 JSON，Skill 只负责获取、渲染或分发结果。
 
@@ -18,6 +18,7 @@
 - 当 API 提供 `X 观察`、`Medium 观察` 时，保留多源 section 与 `x_count` / `medium_count` 等 totals。
 - 使用用户本地配置推送到 Telegram。
 - 本地版本检测。
+- 回答后追加可继续操作的 `快捷入口`，例如查看今日 GEO 日报、查看最新 GEO 信息流、查看往常日报、生成 HTML 预览。
 
 ## 暂不支持
 
@@ -99,6 +100,25 @@ node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
 - `latest` 表示“当前线上可用的最新窗口日报”，不保证一定等于当前自然日；如果线上部署或数据发布滞后，`latest` 可能暂时还指向上一期。
 - `report.title` / `date` 是日报窗口结束日期，不等于每篇文章自己的发布时间。
 - 不要从前一天 report 推断今天也一定有 `X / Medium` section；必须以 API 当次返回为准。
+- 回答日报时应说明实际报告日期和 slot/window；如果用户说“今日”但 `latest` 不是今天，要明确提示最新可用日期。
+- 生成 JSON 或 HTML 后，应在回答中列出产物路径、来源 API 或输入文件、报告日期和 slot/window。
+
+## 快捷入口体验
+
+Skill 回答 feed、日报、周报或版本检查后，默认追加简短的 `快捷入口`：
+
+```text
+快捷入口：
+- 查看今日 GEO 日报
+- 查看最新 GEO 信息流
+- 查看往常日报
+- 生成 HTML 预览
+- 生成本周 GEO 周报
+```
+
+如果用户选择“查看往常日报”但没有给日期，应提示使用 `YYYY-MM-DD`，例如 `查看 2026-06-22 GEO 日报`。
+
+如果 API 请求失败或指定日期没有数据，回答应分成 `数据状态`、`可能原因`、`下一步建议`，避免只输出脚本错误。
 
 ## HTML 模板
 
@@ -150,10 +170,12 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs
 和手动指定的最新版本比较：
 
 ```bash
-node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.4
+node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.5
 ```
 
 版本策略：常规发布沿用 GitHub 当前 minor 版本线，只升级最后一位。不要因为语义化版本判断自动升级到新的 minor 或 major 版本，这两个版本线由用户人工决定。
+
+生产验证建议：从 GitHub 下载或 clone 到临时目录后运行版本检查和渲染测试，不要默认更新 WorkBuddy 本地 skill 缓存。
 
 ## 推送配置
 

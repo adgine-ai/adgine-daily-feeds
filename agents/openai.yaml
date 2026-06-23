@@ -1,6 +1,6 @@
 interface:
   display_name: "Adgine Daily Feeds"
   short_description: "Fetch and render Chinese GEO/AEO feed, daily, and weekly reports"
-  default_prompt: "Use $adgine-daily-feeds to fetch the latest hosted GEO/AEO feed by default, a fixed daily report when requested, or a weekly report when the user asks for weekly review. Preserve API-provided WeChat, X, and Medium sections. After answering, append concise Chinese shortcut prompts such as 查看今日 GEO 日报, 查看最新 GEO 信息流, 查看往常日报, or 生成本周 GEO 周报 when relevant."
+  default_prompt: "Use $adgine-daily-feeds to fetch the latest hosted GEO/AEO feed by default, a fixed daily report when requested, or a weekly report when the user asks for weekly review. Preserve API-provided WeChat, X, and Medium sections. State the actual report date and slot/window, include saved JSON/HTML paths when artifacts are generated, and handle empty or failed API states with 数据状态、可能原因、下一步建议. After answering, append concise Chinese shortcut prompts such as 查看今日 GEO 日报, 查看最新 GEO 信息流, 查看往常日报, 生成 HTML 预览, or 生成本周 GEO 周报 when relevant."
 policy:
   allow_implicit_invocation: true
