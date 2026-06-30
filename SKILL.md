@@ -5,7 +5,7 @@ description: Use this skill to fetch, display, summarize, analyze, render HTML, 
 
 # Adgine Daily Feeds
 
-Version: `v0.6.10`
+Version: `v0.6.11`
 
 Use this skill when the task is to fetch, display, summarize, render HTML, or deliver an Adgine Daily style feed, daily report, or weekly report for `GEO / AEO`.
 
@@ -198,7 +198,7 @@ Date and window UX:
 - When a user asks for historical reports without a date, ask for a date in `YYYY-MM-DD` format or offer to fetch the latest report first.
 - For feed responses, describe the feed window in user language such as "上一日 10:00 到当前时间" when available.
 
-Not in v0.6.10:
+Not in v0.6.11:
 
 - Local X/Twitter, Medium, Reddit, Xiaohongshu, Douyin, GitHub, or competitor crawling.
 - Local Sogou Weixin crawling or browser-based WeChat URL resolution.
@@ -401,7 +401,7 @@ Default output when saving API results:
 
 ## Delivery Configuration
 
-`v0.6.10` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
+`v0.6.11` supports optional Telegram delivery, but only with user-provided local configuration. It also reserves a generic delivery config shape for future providers.
 
 - Example config: `config/destinations.example.json`
 - Local config: `config/destinations.local.json` or `config/destinations.json`

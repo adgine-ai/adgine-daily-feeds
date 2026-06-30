@@ -7,6 +7,7 @@ const SKILL_ROOT = new URL("../", import.meta.url);
 const TEMPLATE_PATH = new URL("templates/daily-report.html", SKILL_ROOT);
 const DEFAULT_API_BASE = "https://daily.wefnews.com/api/reports/daily";
 const DEFAULT_WEEKLY_API_BASE = "https://daily.wefnews.com/api/reports/weekly";
+const SITE_URL = "https://daily.adgine.ai/";
 const SKILL_VERSION = (await readFile(new URL("VERSION", SKILL_ROOT), "utf8")).trim();
 
 function readArg(name) {
@@ -356,11 +357,21 @@ function normalizeTheme(theme) {
   return theme === "dark" ? "dark" : "light";
 }
 
+function siteLink(label) {
+  return `<a href="${escapeAttr(SITE_URL)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a>`;
+}
+
+function renderFooterHtml(label, reportFooter) {
+  const brand = String(reportFooter || "@Adgine.ai beta").replace(/^- /, "");
+  return `${escapeHtml(brand)} · ${siteLink(label)} · API ${escapeHtml(SKILL_VERSION)}`;
+}
+
 function renderHtml(template, report) {
   const content = `${renderConclusion(report)}${renderItems(report)}`;
-  const footer = `${(report.footer || "@Adgine.ai beta").replace(/^- /, "")} · Adgine Daily 日报 · API ${SKILL_VERSION}`;
+  const footer = renderFooterHtml("Adgine Daily 日报", report.footer);
   return template
     .replaceAll("{{title}}", escapeHtml(report.title || "Adgine Daily 日报"))
+    .replaceAll("{{siteUrl}}", escapeAttr(SITE_URL))
     .replaceAll("{{theme}}", escapeHtml(normalizeTheme(readArg("theme"))))
     .replaceAll("{{date}}", escapeHtml(shortDate(report.display_captured_at || report.captured_at)))
     .replaceAll("{{displayScope}}", escapeHtml(report.display_scope || "来源：微信公众号"))
@@ -372,7 +383,7 @@ function renderHtml(template, report) {
     .replaceAll("{{mustReadCount}}", escapeHtml(countMustRead(report)))
     .replaceAll("{{sourceCount}}", escapeHtml(report.totals?.source_count ?? countSources(report)))
     .replaceAll("{{content}}", content)
-    .replaceAll("{{footer}}", escapeHtml(footer));
+    .replaceAll("{{footer}}", footer);
 }
 
 function renderWeeklyHtml(template, weeklyReport) {
@@ -391,9 +402,10 @@ function renderWeeklyHtml(template, weeklyReport) {
     `watch ${byQuality.watch || 0}`,
   ].join(" / ");
   const content = `${renderWeeklyConclusion(weeklyReport)}${renderWeeklyTopics(weeklyReport)}${renderWeeklyItems(weeklyReport)}`;
-  const footer = `@Adgine.ai beta · Adgine Daily 周报 · API ${SKILL_VERSION}`;
+  const footer = renderFooterHtml("Adgine Daily 周报", weeklyReport.footer);
   return template
     .replaceAll("{{title}}", escapeHtml(weeklyReport.title || "Adgine Daily 周报"))
+    .replaceAll("{{siteUrl}}", escapeAttr(SITE_URL))
     .replaceAll("{{theme}}", escapeHtml(normalizeTheme(readArg("theme"))))
     .replaceAll("{{date}}", escapeHtml(`${range.start || "latest"} - ${range.end || "latest"}`))
     .replaceAll("{{displayScope}}", escapeHtml(`来源：${sourceSummary}`))
@@ -405,7 +417,7 @@ function renderWeeklyHtml(template, weeklyReport) {
     .replaceAll("{{mustReadCount}}", escapeHtml(byQuality.must_read || 0))
     .replaceAll("{{sourceCount}}", escapeHtml(Object.values(bySource).filter((count) => Number(count) > 0).length || "-"))
     .replaceAll("{{content}}", content)
-    .replaceAll("{{footer}}", escapeHtml(footer));
+    .replaceAll("{{footer}}", footer);
 }
 
 async function main() {

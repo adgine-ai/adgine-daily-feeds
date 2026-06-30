@@ -1,6 +1,6 @@
 # Adgine Daily Feeds
 
-Version: `v0.6.10`
+Version: `v0.6.11`
 
 `adgine-daily-feeds` is a Codex skill for consuming and delivering Chinese GEO/AEO feed, daily report, and weekly report results. It is API-only: the server generates the JSON, and the skill fetches, renders, or delivers that result.
 

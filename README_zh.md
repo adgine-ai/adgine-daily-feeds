@@ -1,6 +1,6 @@
 # Adgine Daily Feeds
 
-版本：`v0.6.10`
+版本：`v0.6.11`
 
 `adgine-daily-feeds` 是一个用于消费和分发中文 GEO/AEO feed、日报、周报结果的 Codex Skill。当前是 API-only：服务端生成 JSON，Skill 只负责获取、渲染或分发结果。
 
