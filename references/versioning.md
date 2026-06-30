@@ -1,6 +1,6 @@
 # Versioning
 
-Current version: `v0.6.9`
+Current version: `v0.6.10`
 
 Use a human-approved version lane:
 
@@ -33,5 +33,7 @@ Compare with a manually supplied latest version:
 ```bash
 node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.0.2
 ```
+
+By default, the script checks `https://raw.githubusercontent.com/adgine-ai/adgine-daily-feeds/main/VERSION`. Use `--no-remote` for local consistency only.
 
 The script exits with non-zero status when local version fields are inconsistent. If `is_outdated` is `true`, prompt the user to manually update the skill before production use.

@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 const SKILL_ROOT = new URL("../", import.meta.url);
 const VERSION_FILE = new URL("VERSION", SKILL_ROOT);
 const SKILL_FILE = new URL("SKILL.md", SKILL_ROOT);
+const DEFAULT_VERSION_URL = "https://raw.githubusercontent.com/adgine-ai/adgine-daily-feeds/main/VERSION";
 
 function readArg(name) {
   const prefix = `--${name}=`;
@@ -33,6 +34,50 @@ function compareVersions(a, b) {
     }
   }
   return 0;
+}
+
+async function resolveLatestVersion() {
+  const manualLatest = readArg("latest") || process.env.ADGINE_DAILY_FEEDS_LATEST_VERSION || null;
+  if (manualLatest) {
+    return {
+      input: manualLatest,
+      source: "manual",
+      error: null,
+    };
+  }
+
+  if (process.argv.includes("--no-remote")) {
+    return {
+      input: null,
+      source: "disabled",
+      error: null,
+    };
+  }
+
+  const versionUrl = readArg("version-url") || process.env.ADGINE_DAILY_FEEDS_VERSION_URL || DEFAULT_VERSION_URL;
+  try {
+    const response = await fetch(versionUrl, {
+      headers: {
+        Accept: "text/plain",
+        "User-Agent": "adgine-daily-feeds-version-check",
+      },
+    });
+    const text = (await response.text()).trim();
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${text.slice(0, 120) || response.statusText}`);
+    }
+    return {
+      input: text,
+      source: versionUrl,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      input: null,
+      source: versionUrl,
+      error: error.message,
+    };
+  }
 }
 
 function buildUpdateNotice({ current, latest }) {
@@ -68,7 +113,8 @@ async function main() {
   const current = normalizeVersion(versionText);
   const frontmatter = normalizeVersion(skillVersions.frontmatter_version);
   const body = normalizeVersion(skillVersions.body_version);
-  const latestInput = readArg("latest") || process.env.ADGINE_DAILY_FEEDS_LATEST_VERSION || null;
+  const latestResult = await resolveLatestVersion();
+  const latestInput = latestResult.input;
   const latest = latestInput ? normalizeVersion(latestInput) : null;
 
   if (!current) {
@@ -101,6 +147,8 @@ async function main() {
     skill: "adgine-daily-feeds",
     current_version: current.raw,
     latest_version: latest?.raw || null,
+    latest_version_source: latestResult.source,
+    latest_version_error: latestResult.error,
     is_outdated: isOutdated,
     mismatches,
     recommendation: isOutdated
