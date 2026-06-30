@@ -1,6 +1,6 @@
 # Daily Report API Schema
 
-Version: `v0.6.5`
+Version: `v0.6.6`
 
 The API layer returns generated feed, daily report, and weekly report results. Crawling, browser-based WeChat URL resolution, scoring, deduplication, and scheduling happen on the server side before this API is consumed.
 
@@ -44,7 +44,7 @@ Important date and slot semantics:
 - `date` is the report date for the Asia/Shanghai report window end.
 - `slot` or `report.window.slot`, when present, identifies the report window. Current values are `10am` and `18pm`.
 - `latest` means the newest generated report currently available from the hosted API. If an `18pm` report exists, it may be newer than the same date's `10am` report.
-- `report.title` should match that report date, for example `CIO Daily 日报 | 2026-06-10`.
+- `report.title` should match that report date, for example `Adgine Daily 日报 | 2026-06-10`.
 - Individual items inside `report.sections` can have `published_at` earlier than `date`, because they are selected from the prior 24-hour window.
 
 Future normalized endpoint:
@@ -67,7 +67,7 @@ Default parameters:
 {
   "api_version": "v1",
   "status": "ready",
-  "report_id": "cio_daily_2026_06_10_weixin_sogou_10am",
+  "report_id": "adgine_daily_2026_06_10_weixin_sogou_10am",
   "date": "2026-06-10",
   "slot": "10am",
   "timezone": "Asia/Shanghai",
@@ -84,7 +84,7 @@ Default parameters:
   },
   "generated_at": "2026-06-10T10:28:00+08:00",
   "report": {
-    "title": "CIO Daily 日报 | 2026-06-10",
+    "title": "Adgine Daily 日报 | 2026-06-10",
     "render_style": "user_daily",
     "display_scope": "来源：微信公众号 / X / Medium",
     "display_captured_at": "2026-06-10 10:00",
@@ -243,7 +243,7 @@ The `weekly_report` object can also be saved directly:
 
 ```json
 {
-  "title": "CIO Daily 周报 | 2026-06-08 - 2026-06-12",
+  "title": "Adgine Daily 周报 | 2026-06-08 - 2026-06-12",
   "generated_at": "2026-06-12T10:30:00+08:00",
   "range": {
     "start": "2026-06-08",
@@ -354,7 +354,7 @@ Typical response:
       "id": "2026-06-10-10am:今日精选:1:https://mp.weixin.qq.com/...",
       "date": "2026-06-10",
       "slot": "10am",
-      "report_title": "CIO Daily 日报 | 2026-06-10",
+      "report_title": "Adgine Daily 日报 | 2026-06-10",
       "section_title": "今日精选",
       "title": "GEO 内容怎么写，AI 才更容易引用?",
       "source": "公众号·一路凯歌服务平台",

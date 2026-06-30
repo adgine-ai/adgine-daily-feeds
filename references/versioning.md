@@ -1,6 +1,6 @@
 # Versioning
 
-Current version: `v0.6.5`
+Current version: `v0.6.8`
 
 Use a human-approved version lane:
 
@@ -13,11 +13,12 @@ Do not automatically bump to a new minor or major version based on semantic-vers
 
 When bumping version:
 
-1. Update `SKILL.md` frontmatter `version`.
-2. Update `SKILL.md` body `Version`.
-3. Update `VERSION`.
-4. Update version lines in reference files touched by the release.
-5. Verify `agents/openai.yaml` still matches the skill purpose.
+1. Update `SKILL.md` body `Version`.
+2. Update `VERSION`.
+3. Update version lines in reference files touched by the release.
+4. Verify `agents/openai.yaml` still matches the skill purpose.
+
+Do not add a `version` key to `SKILL.md` frontmatter. The system validator only permits supported frontmatter keys such as `name`, `description`, `metadata`, `allowed-tools`, and `license`.
 
 ## Version Check Script
 

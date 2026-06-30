@@ -35,6 +35,22 @@ function compareVersions(a, b) {
   return 0;
 }
 
+function buildUpdateNotice({ current, latest }) {
+  if (!latest || compareVersions(current, latest) >= 0) {
+    return undefined;
+  }
+
+  const command = readArg("update-command") || process.env.ADGINE_DAILY_FEEDS_UPDATE_COMMAND || "git pull";
+  return {
+    update: {
+      command,
+      current: current.raw,
+      latest: latest.raw,
+      message: `adgine-daily-feeds ${latest.raw} available, current ${current.raw}, run: ${command}`,
+    },
+  };
+}
+
 function parseSkillVersion(skillMarkdown) {
   const frontmatter = skillMarkdown.match(/^---\n([\s\S]*?)\n---/);
   const frontmatterVersion = frontmatter?.[1].match(/^version:\s*(.+)$/m)?.[1]?.trim() || null;
@@ -63,7 +79,7 @@ async function main() {
   }
 
   const mismatches = [];
-  if (!frontmatter || frontmatter.raw !== current.raw) {
+  if (skillVersions.frontmatter_version && (!frontmatter || frontmatter.raw !== current.raw)) {
     mismatches.push({
       field: "SKILL.md frontmatter version",
       value: skillVersions.frontmatter_version,
@@ -79,6 +95,7 @@ async function main() {
   }
 
   const isOutdated = latest ? compareVersions(current, latest) < 0 : false;
+  const notice = buildUpdateNotice({ current, latest });
   const result = {
     ok: mismatches.length === 0,
     skill: "adgine-daily-feeds",
@@ -92,6 +109,9 @@ async function main() {
         ? "版本字段不一致，请先同步 VERSION 与 SKILL.md。"
         : "当前本地版本字段一致；未发现需要更新的版本信号。",
   };
+  if (notice) {
+    result._notice = notice;
+  }
 
   console.log(JSON.stringify(result, null, 2));
   process.exitCode = result.ok ? 0 : 1;

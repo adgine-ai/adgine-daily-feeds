@@ -1,8 +1,24 @@
 # Adgine Daily Feeds
 
-Version: `v0.6.5`
+Version: `v0.6.8`
 
 `adgine-daily-feeds` is a Codex skill for consuming and delivering Chinese GEO/AEO feed, daily report, and weekly report results. It is API-only: the server generates the JSON, and the skill fetches, renders, or delivers that result.
+
+## Agent Entry Model
+
+This version frames the skill as an Agent entrypoint, not only a script wrapper:
+
+- Broad "latest GEO/AEO" questions default to the live feed.
+- Explicit daily-report requests use daily report endpoints.
+- Explicit weekly-review requests use weekly report endpoints.
+- Explicit WeChat/X/Twitter/Medium requests use feed source filters when available.
+- Explicit time-window requests use feed `start_at` / `end_at` parameters.
+- HTML or preview requests render standalone HTML.
+- Missing data must be reported as "not returned by the current API", not inferred as absent from the platform.
+
+Current integration surface: Skill, hosted REST JSON API, local standalone HTML preview, and optional user-configured Telegram delivery.
+
+Roadmap, not current capability: public `/agent` page, hosted installer, RSS, OpenAPI, server-side `q` search, and richer topic filters.
 
 ## Supported
 
@@ -14,10 +30,11 @@ Version: `v0.6.5`
 - User-readable weekly report display.
 - Standalone temporary HTML report rendering with Light/Dark theme switch.
 - Platform-aware HTML cards for API-provided WeChat, X, and Medium sections.
-- `latest` report naming based on the Asia/Shanghai window end date, for example `CIO Daily 日报 | 2026-06-10`.
+- `latest` report naming based on the Asia/Shanghai window end date, for example `Adgine Daily 日报 | 2026-06-10`.
 - Multi-source totals such as `x_count` and `medium_count` when the API includes those sections.
 - Optional Telegram delivery with user-provided local config.
 - Local version checking.
+- Agent intent routing for feed, daily, weekly, source, time-window, and HTML requests.
 
 ## Not Supported
 
@@ -25,6 +42,7 @@ Version: `v0.6.5`
 - Browser-based WeChat original URL resolution.
 - Direct WeChat private API access.
 - Built-in delivery credentials or fixed delivery destinations.
+- Public RSS, OpenAPI, hosted installer, or server-side keyword search.
 
 ## Structure
 
@@ -90,6 +108,16 @@ node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
   --end-date=2026-06-12
 ```
 
+Fetch a source/time-window filtered feed:
+
+```bash
+node skills/adgine-daily-feeds/scripts/fetch-daily-report-api.mjs \
+  --source=x \
+  --start-at="2026-06-25 10:00" \
+  --end-at="2026-06-26 09:42" \
+  --limit=50
+```
+
 Use the returned `report.sections` directly for display, Telegram delivery, or web feed rendering. See `references/api-report-schema.md`.
 
 When the API includes supplemental `X 观察` or `Medium 观察` sections, keep them in `report.sections`. The HTML renderer reads `source.platform` / `source_platform`, `summary`, `tags`, and `metrics` automatically.
@@ -150,7 +178,22 @@ node skills/adgine-daily-feeds/scripts/check-version.mjs
 Compare against a manually supplied latest version:
 
 ```bash
-node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.5
+node skills/adgine-daily-feeds/scripts/check-version.mjs --latest=v0.6.8
+```
+
+When `--latest` is newer than the local version, the script includes a lark-cli-style update notice:
+
+```json
+{
+  "_notice": {
+    "update": {
+      "command": "git pull",
+      "current": "v0.6.8",
+      "latest": "v0.6.9",
+      "message": "adgine-daily-feeds v0.6.9 available, current v0.6.8, run: git pull"
+    }
+  }
+}
 ```
 
 Version policy: keep normal releases in the current GitHub minor lane and only bump the last number. Do not bump to a new minor or major version unless the user explicitly approves that transition.

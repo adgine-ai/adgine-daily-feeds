@@ -92,7 +92,7 @@ function linkedTitle(index, item) {
 
 function buildUserDailyHtml(report) {
   const lines = [];
-  lines.push(`<b>${escapeHtml(report.title || "CIO Daily 日报")}</b>`);
+  lines.push(`<b>${escapeHtml(report.title || "Adgine Daily 日报")}</b>`);
   lines.push("");
   lines.push(escapeHtml([report.display_scope, report.display_captured_at].filter(Boolean).join(" ｜ ")));
 
